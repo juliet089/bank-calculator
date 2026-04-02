@@ -74,6 +74,7 @@ markdown
 - npm или yarn
 
 ### Шаг 1: Клонирование репозитория
+
     git clone https://github.com/juliet089/bank-calculator.git
     cd bank-calculator
 
@@ -81,11 +82,13 @@ markdown
 ### Шаг 2: Установка зависимостей
 
 **Backend:**
+
     cd server
     npm install
 
 
 **Frontend:**
+
     cd client
     npm install
 
@@ -105,30 +108,36 @@ markdown
 ### Шаг 4: Запуск MongoDB
 
 **Windows:**
+
     net start MongoDB
 
 
 **Mac:**
+
     brew services start mongodb-community
 
 
 **Linux:**
+
     sudo systemctl start mongod
 
 
 ### Шаг 5: Запуск приложения
 
 **Запуск backend (в отдельном терминале):**
+
     cd server
     npm run dev
 
 
 **Запуск frontend (в отдельном терминале):**
+
     cd client
     npm start
 
 
 ### Шаг 6: Создание администратора
+
     cd server
     node scripts/createAdmin.js
 
