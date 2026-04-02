@@ -141,7 +141,6 @@ text
 cd server
 node scripts/createAdmin.js
 
-text
 
 **Данные для входа в админ-панель:**
 
@@ -156,43 +155,42 @@ text
 ---
 
 ## Структура проекта
-bank-calculator/
-├── client/ # React фронтенд
-│ ├── public/ # Статические файлы
-│ └── src/
-│ ├── components/ # React компоненты
-│ ├── pages/ # Страницы
-│ │ ├── HomePage.jsx # Главная страница (калькуляторы)
-│ │ └── AdminPage.jsx # Админ-панель
-│ ├── services/ # API сервисы
-│ ├── utils/ # Утилиты
-│ └── styles/ # CSS стили
-│
-├── server/ # Node.js бэкенд
-│ ├── models/ # Mongoose модели
-│ │ ├── User.js # Пользователи
-│ │ ├── Calculation.js # Расчеты
-│ │ └── Calculator.js # Калькуляторы
-│ ├── routes/ # API маршруты
-│ │ ├── adminRoutes.js # Админ API
-│ │ ├── calculationRoutes.js # Расчеты API
-│ │ └── calculatorRoutes.js # Калькуляторы API
-│ ├── middleware/ # Middleware
-│ ├── utils/ # Утилиты
-│ │ ├── emailService.js # Отправка email
-│ │ └── loanCalculator.js # Логика расчетов
-│ ├── scripts/ # Скрипты
-│ │ ├── createAdmin.js # Создание администратора
-│ │ ├── backup.js # Бэкап БД
-│ │ └── recovery.js # Восстановление
-│ ├── logs/ # Логи приложения
-│ └── server.js # Точка входа
-│
-├── backups/ # Резервные копии БД
-├── README.md # Документация
-└── README_RECOVERY.md # Инструкция по восстановлению
 
-text
+bank-calculator/
+├── client/                     # React фронтенд
+│   ├── public/                 # Статические файлы
+│   └── src/
+│       ├── components/         # React компоненты
+│       ├── pages/              # Страницы
+│       │   ├── HomePage.jsx    # Главная страница (калькуляторы)
+│       │   └── AdminPage.jsx   # Админ-панель
+│       ├── services/           # API сервисы
+│       ├── utils/              # Утилиты
+│       └── styles/             # CSS стили
+│
+├── server/                     # Node.js бэкенд
+│   ├── models/                 # Mongoose модели
+│   │   ├── User.js             # Пользователи
+│   │   ├── Calculation.js      # Расчеты
+│   │   └── Calculator.js       # Калькуляторы
+│   ├── routes/                 # API маршруты
+│   │   ├── adminRoutes.js      # Админ API
+│   │   ├── calculationRoutes.js # Расчеты API
+│   │   └── calculatorRoutes.js  # Калькуляторы API
+│   ├── middleware/             # Middleware
+│   ├── utils/                  # Утилиты
+│   │   ├── emailService.js     # Отправка email
+│   │   └── loanCalculator.js   # Логика расчетов
+│   ├── scripts/                # Скрипты
+│   │   ├── createAdmin.js      # Создание администратора
+│   │   ├── backup.js           # Бэкап БД
+│   │   └── recovery.js         # Восстановление
+│   ├── logs/                   # Логи приложения
+│   └── server.js               # Точка входа
+│
+├── backups/                    # Резервные копии БД
+├── README.md                   # Документация
+└── README_RECOVERY.md          # Инструкция по восстановлению
 
 ---
 
