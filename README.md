@@ -14,12 +14,12 @@
 
 ## 📋 Содержание
 
-- [Технологии](#технологии)
-- [Функциональность](#функциональность)
-- [Установка и запуск](#установка-и-запуск)
-- [Структура проекта](#структура-проекта)
-- [Скриншоты](#скриншоты)
-- [Лицензия](#лицензия)
+- ![Технологии](##технологии)
+- ![Функциональность](#функциональность)
+- ![Установка и запуск](#установка-и-запуск)
+- ![Структура проекта](#структура-проекта)
+- ![Скриншоты](#скриншоты)
+- ![Лицензия](#лицензия)
 
 ---
 
@@ -187,15 +187,14 @@ bank-calculator/
 
 
 📸 Скриншоты
-Главная страница
-https://screenshots/home.png
-https://screenshots/home_mobile.png
-
-Ипотечный калькулятор
-https://screenshots/mortgage.png
-
-Админ-панель
-https://screenshots/admin.png
+![Главная страница](https://github.com/juliet089/bank-calculator/blob/master/screenshots/home.png)
+![Главная страница (мобильная версия)](https://github.com/juliet089/bank-calculator/blob/master/screenshots/home_mobile.png)
+![Админ-панель](https://github.com/juliet089/bank-calculator/blob/master/screenshots/admin.png)
+![Админ-панель (мобильная версия)](https://github.com/juliet089/bank-calculator/blob/master/screenshots/admin_mobile.png)
+![Админ-панель статистика](https://github.com/juliet089/bank-calculator/blob/master/screenshots/admin_stat.png)
+![Админ-панель статистика (мобильная версия)](https://github.com/juliet089/bank-calculator/blob/master/screenshots/admin_stat_mobile.png)
+![Админ-панель калькуляторы](https://github.com/juliet089/bank-calculator/blob/master/screenshots/admin_calc.png)
+![Админ-панель калькуляторы (мобильная версия)](https://github.com/juliet089/bank-calculator/blob/master/screenshots/admin_calc_mobile.png)
 
 
 📄 Лицензия
