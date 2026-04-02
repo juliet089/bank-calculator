@@ -186,7 +186,19 @@ bank-calculator/
 └── README_RECOVERY.md          # Инструкция по восстановлению
 
 
-📸 Скриншоты
+## 📸 Скриншоты
+
+### Главная страница
+![Главная страница](https://raw.githubusercontent.com/juliet089/bank-calculator/master/screenshots/home.png)
+
+### Ипотечный калькулятор
+![Ипотека](https://raw.githubusercontent.com/juliet089/bank-calculator/master/screenshots/mortgage.png)
+
+### Админ-панель
+![Админ-панель](https://raw.githubusercontent.com/juliet089/bank-calculator/master/screenshots/admin.png)
+
+### Письмо с результатами
+![Email](https://raw.githubusercontent.com/juliet089/bank-calculator/master/screenshots/email.png)
 Главная страница: https://github.com/juliet089/bank-calculator/blob/master/screenshots/home.png
 [Главная страница (мобильная версия)](https://github.com/juliet089/bank-calculator/blob/master/screenshots/home_mobile.png)
 [Админ-панель](https://github.com/juliet089/bank-calculator/blob/master/screenshots/admin.png)
