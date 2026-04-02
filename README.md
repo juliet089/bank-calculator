@@ -76,7 +76,8 @@
 - npm или yarn
 
 
-Шаг 1: Клонирование репозитория
+### Шаг 1: Клонирование репозитория
+
 ```bash
 git clone https://github.com/juliet089/bank-calculator.git
 cd bank-calculator
@@ -85,12 +86,11 @@ cd bank-calculator
 Шаг 2: Установка зависимостей
 Backend:
 
-bash
 cd server
 npm install
+
 Frontend:
 
-bash
 cd client
 npm install
 
@@ -98,7 +98,6 @@ npm install
 Шаг 3: Настройка переменных окружения
 Создайте файл .env в папке server/:
 
-env
 PORT=5000
 MONGODB_URI=mongodb://127.0.0.1:27017/bank_calculator
 JWT_SECRET=your_super_secret_key_here
@@ -111,35 +110,35 @@ EMAIL_PASS=your_app_password
 Шаг 4: Запуск MongoDB
 Windows:
 
-bash
 net start MongoDB
+
 Mac:
 
-bash
 brew services start mongodb-community
+
 Linux:
 
-bash
 sudo systemctl start mongod
 
 
 Шаг 5: Запуск приложения
 Запуск backend (в отдельном терминале):
 
-bash
 cd server
 npm run dev
+
 Запуск frontend (в отдельном терминале):
 
-bash
 cd client
 npm start
 
 
 Шаг 6: Создание администратора
-bash
+
 cd server
 node scripts/createAdmin.js
+
+
 Данные для входа в админ-панель:
 
 Логин: admin
@@ -149,6 +148,7 @@ node scripts/createAdmin.js
 Шаг 7: Открыть приложение
 Пользовательская часть: http://localhost:3000
 Админ-панель: http://localhost:3000/admin
+
 
 📁 Структура проекта
 
@@ -187,7 +187,6 @@ bank-calculator/
 ├── backups/                    # Резервные копии БД
 ├── README.md                   # Документация
 └── README_RECOVERY.md          # Инструкция по восстановлению
-
 
 📄 Лицензия
 Этот проект распространяется под лицензией MIT. Подробнее см. файл LICENSE.
