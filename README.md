@@ -203,13 +203,13 @@ markdown
 
 ## 💖 Благодарности
 
-   ❤ React Team
+❤ React Team
 
-   ❤ MongoDB Team
+❤ MongoDB Team
 
-   ❤ Express.js Team
+❤ Express.js Team
 
-   ❤ Всем контрибьюторам
+❤ Всем контрибьюторам
 
 ---
 
