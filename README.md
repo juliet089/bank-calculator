@@ -93,10 +93,10 @@ markdown
 ### Шаг 3: Настройка переменных окружения
 
 Создайте файл .env в папке server/:
+
     PORT=5000
     MONGODB_URI=mongodb://127.0.0.1:27017/bank_calculator
     JWT_SECRET=your_super_secret_key_here
-    
     Email настройки (для Gmail)
     EMAIL_USER=your_email@gmail.com
     EMAIL_PASS=your_app_password
