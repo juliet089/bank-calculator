@@ -199,7 +199,7 @@ bank-calculator/
 
 ### Письмо с результатами
 ![Email](https://raw.githubusercontent.com/juliet089/bank-calculator/master/screenshots/email.png)
-Главная страница: https://github.com/juliet089/bank-calculator/blob/master/screenshots/home.png
+Главная страница: [https://github.com/juliet089/bank-calculator/blob/master/screenshots/home.png](https://github.com/juliet089/bank-calculator/blob/master/screenshots/admin.png?raw=true)
 [Главная страница (мобильная версия)](https://github.com/juliet089/bank-calculator/blob/master/screenshots/home_mobile.png)
 [Админ-панель](https://github.com/juliet089/bank-calculator/blob/master/screenshots/admin.png)
 [Админ-панель (мобильная версия)](https://github.com/juliet089/bank-calculator/blob/master/screenshots/admin_mobile.png)
