@@ -74,8 +74,8 @@ markdown
 - npm или yarn
 
 ### Шаг 1: Клонирование репозитория
-git clone https://github.com/juliet089/bank-calculator.git
-cd bank-calculator
+    git clone https://github.com/juliet089/bank-calculator.git
+    cd bank-calculator
 
 text
 
