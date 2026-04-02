@@ -75,8 +75,8 @@
 - MongoDB (версия 6+)
 - npm или yarn
 
-Шаг 1: Клонирование репозитория
 
+Шаг 1: Клонирование репозитория
 ```bash
 git clone https://github.com/juliet089/bank-calculator.git
 cd bank-calculator
