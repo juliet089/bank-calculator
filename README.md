@@ -2,11 +2,11 @@
 
 [![GitHub repo size](https://img.shields.io/github/repo-size/juliet089/bank-calculator)](https://github.com/juliet089/bank-calculator)
 [![GitHub last commit](https://img.shields.io/github/last-commit/juliet089/bank-calculator)](https://github.com/juliet089/bank-calculator)
-[![GitHub stars](https://img.shields.io/github/stars/juliet089/bank-calculator?style=social)](https://github.com/juliet089/bank-calculator)
 ![React](https://img.shields.io/badge/React-18-blue)
 ![Node.js](https://img.shields.io/badge/Node.js-18-green)
 ![MongoDB](https://img.shields.io/badge/MongoDB-6-brightgreen)
 ![License](https://img.shields.io/badge/License-MIT-green)
+[![GitHub stars](https://img.shields.io/github/stars/juliet089/bank-calculator?style=social)](https://github.com/juliet089/bank-calculator)
 
 Веб-приложение для расчета ипотеки, автокредита, потребительского кредита и пенсионных накоплений. Результаты расчетов можно отправлять на email. Администратор может просматривать все расчеты, управлять калькуляторами и экспортировать данные в CSV.
 
