@@ -1,4 +1,3 @@
-markdown
 # 🏦 Финансовый калькулятор для банка
 
 [![GitHub repo size](https://img.shields.io/github/repo-size/juliet089/bank-calculator)](https://github.com/juliet089/bank-calculator)
