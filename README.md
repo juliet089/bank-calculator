@@ -189,7 +189,7 @@ bank-calculator/
 ## 📸 Скриншоты
 
 ### Главная страница
-![Главная страница](https://raw.githubusercontent.com/juliet089/bank-calculator/master/screenshots/home.png)
+![Главная страница](https://github.com/juliet089/bank-calculator/blob/master/screenshots/admin.png?raw=true)
 
 ### Ипотечный калькулятор
 ![Ипотека](https://raw.githubusercontent.com/juliet089/bank-calculator/master/screenshots/mortgage.png)
