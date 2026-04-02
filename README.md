@@ -193,11 +193,7 @@ markdown
 
 ### Главная страница (мобильная версия)
 
-![Главная страница мобильная](screenshots/home_mobile.png)
-
-### Ипотечный калькулятор
-
-![Ипотека](screenshots/mortgage.png)
+![Главная страница (мобильная версия)](screenshots/home_mobile.png)
 
 ### Админ-панель
 
@@ -205,7 +201,7 @@ markdown
 
 ### Админ-панель (мобильная версия)
 
-![Админ-панель мобильная](screenshots/admin_mobile.png)
+![Админ-панель (мобильная версия)](screenshots/admin_mobile.png)
 
 ### Админ-панель статистика
 
@@ -213,7 +209,7 @@ markdown
 
 ### Админ-панель статистика (мобильная версия)
 
-![Админ-панель статистика мобильная](screenshots/admin_stat_mobile.png)
+![Админ-панель статистика (мобильная версия)](screenshots/admin_stat_mobile.png)
 
 ### Админ-панель калькуляторы
 
@@ -221,11 +217,7 @@ markdown
 
 ### Админ-панель калькуляторы (мобильная версия)
 
-![Админ-панель калькуляторы мобильная](screenshots/admin_calc_mobile.png)
-
-### Письмо с результатами
-
-![Email](screenshots/email.png)
+![Админ-панель калькуляторы (мобильная версия)](screenshots/admin_calc_mobile.png)
 
 ---
 
@@ -248,8 +240,11 @@ markdown
 ## Благодарности
 
 ❤ React Team
+
 ❤ MongoDB Team
+
 ❤ Express.js Team
+
 ❤ Всем контрибьюторам
 
 ---
