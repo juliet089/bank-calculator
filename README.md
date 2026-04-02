@@ -77,69 +77,60 @@ markdown
     git clone https://github.com/juliet089/bank-calculator.git
     cd bank-calculator
 
-text
 
 ### Шаг 2: Установка зависимостей
 
 **Backend:**
-cd server
-npm install
+    cd server
+    npm install
 
-text
 
 **Frontend:**
-cd client
-npm install
+    cd client
+    npm install
 
-text
 
 ### Шаг 3: Настройка переменных окружения
 
 Создайте файл .env в папке server/:
-PORT=5000
-MONGODB_URI=mongodb://127.0.0.1:27017/bank_calculator
-JWT_SECRET=your_super_secret_key_here
+    PORT=5000
+    MONGODB_URI=mongodb://127.0.0.1:27017/bank_calculator
+    JWT_SECRET=your_super_secret_key_here
+    
+    Email настройки (для Gmail)
+    EMAIL_USER=your_email@gmail.com
+    EMAIL_PASS=your_app_password
 
-Email настройки (для Gmail)
-EMAIL_USER=your_email@gmail.com
-EMAIL_PASS=your_app_password
-
-text
 
 ### Шаг 4: Запуск MongoDB
 
 **Windows:**
-net start MongoDB
+    net start MongoDB
 
-text
 
 **Mac:**
-brew services start mongodb-community
+    brew services start mongodb-community
 
-text
 
 **Linux:**
-sudo systemctl start mongod
+    sudo systemctl start mongod
 
-text
 
 ### Шаг 5: Запуск приложения
 
 **Запуск backend (в отдельном терминале):**
-cd server
-npm run dev
+    cd server
+    npm run dev
 
-text
 
 **Запуск frontend (в отдельном терминале):**
-cd client
-npm start
+    cd client
+    npm start
 
-text
 
 ### Шаг 6: Создание администратора
-cd server
-node scripts/createAdmin.js
+    cd server
+    node scripts/createAdmin.js
 
 
 **Данные для входа в админ-панель:**
@@ -156,41 +147,41 @@ node scripts/createAdmin.js
 
 ## Структура проекта
 
-bank-calculator/
-├── client/                     # React фронтенд
-│   ├── public/                 # Статические файлы
-│   └── src/
-│       ├── components/         # React компоненты
-│       ├── pages/              # Страницы
-│       │   ├── HomePage.jsx    # Главная страница (калькуляторы)
-│       │   └── AdminPage.jsx   # Админ-панель
-│       ├── services/           # API сервисы
-│       ├── utils/              # Утилиты
-│       └── styles/             # CSS стили
-│
-├── server/                     # Node.js бэкенд
-│   ├── models/                 # Mongoose модели
-│   │   ├── User.js             # Пользователи
-│   │   ├── Calculation.js      # Расчеты
-│   │   └── Calculator.js       # Калькуляторы
-│   ├── routes/                 # API маршруты
-│   │   ├── adminRoutes.js      # Админ API
-│   │   ├── calculationRoutes.js # Расчеты API
-│   │   └── calculatorRoutes.js  # Калькуляторы API
-│   ├── middleware/             # Middleware
-│   ├── utils/                  # Утилиты
-│   │   ├── emailService.js     # Отправка email
-│   │   └── loanCalculator.js   # Логика расчетов
-│   ├── scripts/                # Скрипты
-│   │   ├── createAdmin.js      # Создание администратора
-│   │   ├── backup.js           # Бэкап БД
-│   │   └── recovery.js         # Восстановление
-│   ├── logs/                   # Логи приложения
-│   └── server.js               # Точка входа
-│
-├── backups/                    # Резервные копии БД
-├── README.md                   # Документация
-└── README_RECOVERY.md          # Инструкция по восстановлению
+    bank-calculator/
+    ├── client/                     # React фронтенд
+    │   ├── public/                 # Статические файлы
+    │   └── src/
+    │       ├── components/         # React компоненты
+    │       ├── pages/              # Страницы
+    │       │   ├── HomePage.jsx    # Главная страница (калькуляторы)
+    │       │   └── AdminPage.jsx   # Админ-панель
+    │       ├── services/           # API сервисы
+    │       ├── utils/              # Утилиты
+    │       └── styles/             # CSS стили
+    │
+    ├── server/                     # Node.js бэкенд
+    │   ├── models/                 # Mongoose модели
+    │   │   ├── User.js             # Пользователи
+    │   │   ├── Calculation.js      # Расчеты
+    │   │   └── Calculator.js       # Калькуляторы
+    │   ├── routes/                 # API маршруты
+    │   │   ├── adminRoutes.js      # Админ API
+    │   │   ├── calculationRoutes.js # Расчеты API
+    │   │   └── calculatorRoutes.js  # Калькуляторы API
+    │   ├── middleware/             # Middleware
+    │   ├── utils/                  # Утилиты
+    │   │   ├── emailService.js     # Отправка email
+    │   │   └── loanCalculator.js   # Логика расчетов
+    │   ├── scripts/                # Скрипты
+    │   │   ├── createAdmin.js      # Создание администратора
+    │   │   ├── backup.js           # Бэкап БД
+    │   │   └── recovery.js         # Восстановление
+    │   ├── logs/                   # Логи приложения
+    │   └── server.js               # Точка входа
+    │
+    ├── backups/                    # Резервные копии БД
+    ├── README.md                   # Документация
+    └── README_RECOVERY.md          # Инструкция по восстановлению
 
 ---
 
@@ -256,10 +247,10 @@ bank-calculator/
 
 ## Благодарности
 
-- React Team
-- MongoDB Team
-- Express.js Team
-- Всем контрибьюторам
+❤ React Team
+❤ MongoDB Team
+❤ Express.js Team
+❤ Всем контрибьюторам
 
 ---
 
