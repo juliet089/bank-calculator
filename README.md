@@ -1,3 +1,4 @@
+markdown
 # 🏦 Финансовый калькулятор для банка
 
 [![GitHub repo size](https://img.shields.io/github/repo-size/juliet089/bank-calculator)](https://github.com/juliet089/bank-calculator)
@@ -14,7 +15,7 @@
 
 ## 📋 Содержание
 
-- [Технологии](##технологии)
+- [Технологии](#технологии)
 - [Функциональность](#функциональность)
 - [Установка и запуск](#установка-и-запуск)
 - [Структура проекта](#структура-проекта)
@@ -72,29 +73,26 @@
 - MongoDB (версия 6+)
 - npm или yarn
 
-
 ### Шаг 1: Клонирование репозитория
 
 ```bash
 git clone https://github.com/juliet089/bank-calculator.git
 cd bank-calculator
-
-
 Шаг 2: Установка зависимостей
 Backend:
 
+bash
 cd server
 npm install
-
 Frontend:
 
+bash
 cd client
 npm install
-
-
 Шаг 3: Настройка переменных окружения
 Создайте файл .env в папке server/:
 
+env
 PORT=5000
 MONGODB_URI=mongodb://127.0.0.1:27017/bank_calculator
 JWT_SECRET=your_super_secret_key_here
@@ -102,40 +100,34 @@ JWT_SECRET=your_super_secret_key_here
 # Email настройки (для Gmail)
 EMAIL_USER=your_email@gmail.com
 EMAIL_PASS=your_app_password
-
-
 Шаг 4: Запуск MongoDB
 Windows:
 
+bash
 net start MongoDB
-
 Mac:
 
+bash
 brew services start mongodb-community
-
 Linux:
 
+bash
 sudo systemctl start mongod
-
-
 Шаг 5: Запуск приложения
 Запуск backend (в отдельном терминале):
 
+bash
 cd server
 npm run dev
-
 Запуск frontend (в отдельном терминале):
 
+bash
 cd client
 npm start
-
-
 Шаг 6: Создание администратора
-
+bash
 cd server
 node scripts/createAdmin.js
-
-
 Данные для входа в админ-панель:
 
 Логин: admin
@@ -144,11 +136,11 @@ node scripts/createAdmin.js
 
 Шаг 7: Открыть приложение
 Пользовательская часть: http://localhost:3000
+
 Админ-панель: http://localhost:3000/admin
 
-
 📁 Структура проекта
-
+text
 bank-calculator/
 ├── client/                     # React фронтенд
 │   ├── public/                 # Статические файлы
@@ -184,34 +176,39 @@ bank-calculator/
 ├── backups/                    # Резервные копии БД
 ├── README.md                   # Документация
 └── README_RECOVERY.md          # Инструкция по восстановлению
+📸 Скриншоты
+Главная страница
+https://screenshots/home.png
 
+Главная страница (мобильная версия)
+https://screenshots/home_mobile.png
 
-## 📸 Скриншоты
+Ипотечный калькулятор
+https://screenshots/mortgage.png
 
-### Главная страница
-![Главная страница](screenshots/home.png)
+Админ-панель
+https://screenshots/admin.png
 
-### Ипотечный калькулятор
-![Ипотека](screenshots/mortgage.png)
+Админ-панель (мобильная версия)
+https://screenshots/admin_mobile.png
 
-### Админ-панель
-![Админ-панель](screenshots/admin.png)
+Админ-панель статистика
+https://screenshots/admin_stat.png
 
-### Письмо с результатами
-![Email](screenshots/email.png)
+Админ-панель статистика (мобильная версия)
+https://screenshots/admin_stat_mobile.png
 
-[Главная страница (мобильная версия)](https://github.com/juliet089/bank-calculator/blob/master/screenshots/home_mobile.png)
-[Админ-панель](https://github.com/juliet089/bank-calculator/blob/master/screenshots/admin.png)
-[Админ-панель (мобильная версия)](https://github.com/juliet089/bank-calculator/blob/master/screenshots/admin_mobile.png)
-[Админ-панель статистика](https://github.com/juliet089/bank-calculator/blob/master/screenshots/admin_stat.png)
-[Админ-панель статистика (мобильная версия)](https://github.com/juliet089/bank-calculator/blob/master/screenshots/admin_stat_mobile.png)
-[Админ-панель калькуляторы](https://github.com/juliet089/bank-calculator/blob/master/screenshots/admin_calc.png)
-[Админ-панель калькуляторы (мобильная версия)](https://github.com/juliet089/bank-calculator/blob/master/screenshots/admin_calc_mobile.png)
+Админ-панель калькуляторы
+https://screenshots/admin_calc.png
 
+Админ-панель калькуляторы (мобильная версия)
+https://screenshots/admin_calc_mobile.png
+
+Письмо с результатами
+https://screenshots/email.png
 
 📄 Лицензия
 Этот проект распространяется под лицензией MIT. Подробнее см. файл LICENSE.
-
 
 👤 Автор
 Разработчик: Краснюкова Елена Алексеевна
@@ -219,9 +216,12 @@ Email: lenamk019@yandex.ru
 GitHub: juliet089
 
 ⭐ Благодарности
-    • React Team
-    • MongoDB Team
-    • Express.js Team
-    • Всем контрибьюторам
+React Team
+
+MongoDB Team
+
+Express.js Team
+
+Всем контрибьюторам
 
 ⭐ Поставьте звезду на GitHub, если этот проект был полезен!
