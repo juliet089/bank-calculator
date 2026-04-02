@@ -186,6 +186,18 @@ bank-calculator/
 └── README_RECOVERY.md          # Инструкция по восстановлению
 
 
+📸 Скриншоты
+Главная страница
+https://screenshots/home.png
+https://screenshots/home_mobile.png
+
+Ипотечный калькулятор
+https://screenshots/mortgage.png
+
+Админ-панель
+https://screenshots/admin.png
+
+
 📄 Лицензия
 Этот проект распространяется под лицензией MIT. Подробнее см. файл LICENSE.
 
