@@ -2,6 +2,9 @@ import React, { useState, useEffect, useCallback } from 'react';
 import api from '../services/api';
 import './AdminPage.css';
 
+// API URL из переменной окружения
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+
 const AdminPage = () => {
     // Состояния для аутентификации
     const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -143,7 +146,7 @@ const AdminPage = () => {
                 return;
             }
             
-            const response = await fetch('http://localhost:5000/api/admin/calculations/export', {
+            const response = await fetch(`${API_URL}/admin/calculations/export`, {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${token}`
