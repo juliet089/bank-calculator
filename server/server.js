@@ -99,7 +99,7 @@ app.use((req, res, next) => {
 // СТАНДАРТНЫЕ MIDDLEWARE
 // ============================================
 app.use(cors({
-    origin: ['http://localhost:3000', 'http://localhost:5000'],
+    origin: ['https://juliet089-bank-calculator-753a.twc1.net', 'http://localhost:3000', 'http://localhost:5000'],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization']
