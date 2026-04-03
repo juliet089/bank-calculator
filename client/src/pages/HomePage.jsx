@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import { formatMoney } from '../utils/loanCalculations';
 import './HomePage.css';
 
+// API URL из переменной окружения
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+
 // Компонент для отправки email
 const EmailSender = ({ calculatorType, inputData, resultData }) => {
     const [email, setEmail] = useState('');
@@ -25,9 +28,7 @@ const EmailSender = ({ calculatorType, inputData, resultData }) => {
         setError('');
         
         try {
-            const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
-
-            const response = await fetch(`${API_URL}/calculate, {
+            const response = await fetch(`${API_URL}/calculate/send-email`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -105,7 +106,7 @@ const MortgageCalculator = () => {
         setLoading(true);
         
         try {
-            const response = await fetch('http://localhost:5000/api/calculate', {
+            const response = await fetch(`${API_URL}/calculate`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -239,7 +240,7 @@ const AutoCreditCalculator = () => {
         setLoading(true);
         
         try {
-            const response = await fetch('http://localhost:5000/api/calculate', {
+            const response = await fetch(`${API_URL}/calculate`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -367,7 +368,7 @@ const ConsumerCalculator = () => {
         setLoading(true);
         
         try {
-            const response = await fetch('http://localhost:5000/api/calculate', {
+            const response = await fetch(`${API_URL}/calculate`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -479,7 +480,7 @@ const PensionCalculator = () => {
         setLoading(true);
         
         try {
-            const response = await fetch('http://localhost:5000/api/calculate', {
+            const response = await fetch(`${API_URL}/calculate`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
