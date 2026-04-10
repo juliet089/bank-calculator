@@ -89,9 +89,7 @@ router.post('/', async (req, res) => {
     }
 });
 
-// ============================================
-// АСИНХРОННАЯ ОТПРАВКА EMAIL (без ожидания)
-// ============================================
+// Маршрут для отправки результата на email (асинхронный)
 router.post('/send-email', async (req, res) => {
     try {
         const { email, calculatorType, inputData, resultData } = req.body;
@@ -120,22 +118,21 @@ router.post('/send-email', async (req, res) => {
             message: 'Результаты отправляются на почту. Письмо придет в течение минуты.'
         });
         
-        // Отправляем email в фоновом режиме (не блокируем ответ)
+        // Отправляем email в фоновом режиме
         const { sendCalculationResult } = require('../utils/emailService');
         
-        // Запускаем отправку без await - она выполняется параллельно
         sendCalculationResult(email, calculatorType, inputData, resultData)
             .then((result) => {
                 console.log(`✅ Email успешно отправлен на ${email}`);
-                if (result.demo) {
-                    console.log(`   ℹ️ Демо-режим: письмо не отправлено реально`);
+                if (result.messageId) {
+                    console.log(`   📝 ID: ${result.messageId}`);
                 }
             })
             .catch((error) => {
                 console.error(`❌ Ошибка отправки email на ${email}:`, error.message);
             });
         
-        // Обновляем запись в БД, добавляя email (тоже в фоне)
+        // Обновляем запись в БД, добавляя email (в фоне)
         const userIp = req.ip || req.connection.remoteAddress;
         Calculation.findOneAndUpdate(
             { 
@@ -149,7 +146,6 @@ router.post('/send-email', async (req, res) => {
         
     } catch (error) {
         console.error('❌ Ошибка:', error);
-        // Если ошибка произошла до отправки ответа
         if (!res.headersSent) {
             res.status(500).json({ 
                 success: false, 
