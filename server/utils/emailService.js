@@ -4,12 +4,17 @@ let transporter = null;
 
 const getTransporter = () => {
     if (!transporter) {
-        console.log('📧 Используется Gmail SMTP');
+        console.log('📧 Используется Timeweb SMTP');
         transporter = nodemailer.createTransport({
-            service: 'gmail',
+            host: process.env.EMAIL_HOST || 'smtp.timeweb.ru',
+            port: parseInt(process.env.EMAIL_PORT) || 465,
+            secure: process.env.EMAIL_SECURE === 'true' || true,
             auth: {
                 user: process.env.EMAIL_USER,
                 pass: process.env.EMAIL_PASS
+            },
+            tls: {
+                rejectUnauthorized: false
             },
             connectionTimeout: 30000,
             greetingTimeout: 30000,
@@ -333,9 +338,8 @@ const sendCalculationResult = async (toEmail, calculatorType, inputData, resultD
         
         const transporter = getTransporter();
         
-        // Проверяем подключение
         await transporter.verify();
-        console.log('✅ SMTP подключение проверено');
+        console.log('✅ Timeweb SMTP подключение проверено');
         
         const title = {
             mortgage: 'Ипотечный калькулятор',
@@ -377,10 +381,10 @@ ${JSON.stringify(resultData, null, 2)}
             }
         };
         
-        console.log(`📧 Отправка email через Gmail на ${toEmail}...`);
+        console.log(`📧 Отправка email через Timeweb на ${toEmail}...`);
         const info = await transporter.sendMail(mailOptions);
         
-        console.log('✅ Email успешно отправлен через Gmail!');
+        console.log('✅ Email успешно отправлен через Timeweb!');
         console.log(`   📝 ID: ${info.messageId}`);
         console.log(`   📬 Получатель: ${toEmail}`);
         
@@ -393,16 +397,7 @@ ${JSON.stringify(resultData, null, 2)}
         
     } catch (error) {
         console.error('❌ Ошибка отправки email:', error.message);
-        
-        if (error.message.includes('Invalid login') || error.message.includes('535')) {
-            throw new Error('Ошибка аутентификации. Проверьте EMAIL_USER и EMAIL_PASS в .env');
-        } else if (error.message.includes('ECONNREFUSED') || error.message.includes('ETIMEDOUT')) {
-            throw new Error('Не удалось подключиться к SMTP серверу. Проверьте интернет-соединение.');
-        } else if (error.message.includes('550')) {
-            throw new Error('Email получателя отклонен. Проверьте правильность адреса.');
-        } else {
-            throw new Error(`Не удалось отправить email: ${error.message}`);
-        }
+        throw new Error(`Не удалось отправить email: ${error.message}`);
     }
 };
 
