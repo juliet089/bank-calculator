@@ -66,10 +66,10 @@ const Statistics = () => {
     // Определение названий типов калькуляторов
     const getTypeName = (type) => {
         const names = {
-            mortgage: '🏠 Ипотека',
-            autocredit: '🚗 Автокредит',
-            consumer: '💳 Потребительский',
-            pension: '💰 Пенсионный'
+            mortgage: '🏠 Ипотека ',
+            autocredit: '🚗 Автокредит ',
+            consumer: '💳 Потребительский ',
+            pension: '💰 Пенсионный '
         };
         return names[type] || type;
     };
@@ -135,6 +135,7 @@ const Statistics = () => {
             {byType.length > 0 && (
                 <div className="stats-section">
                     <h3>📈 Распределение по типам калькуляторов</h3>
+                    <br></br>
                     <div className="type-distribution">
                         {byType.map((item, index) => {
                             const count = item.count || 0;
