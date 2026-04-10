@@ -86,6 +86,38 @@ const CalculatorCard = ({ calculator }) => {
             const numValue = parseFloat(value);
             preparedInputs[key] = isNaN(numValue) ? 0 : numValue;
         }
+        // Универсальный компонент калькулятора
+const CalculatorCard = ({ calculator }) => {
+    const [inputs, setInputs] = useState({});
+    const [result, setResult] = useState(null);
+    const [loading, setLoading] = useState(false);
+    const [email, setEmail] = useState('');
+    const [sending, setSending] = useState(false);
+    const [sent, setSent] = useState(false);
+    const [emailError, setEmailError] = useState('');
+
+    const calculate = async () => {
+        // Проверяем заполнение всех полей
+        for (const field of calculator.fields || []) {
+            const value = inputs[field.name];
+            if (field.required && (value === undefined || value === '' || value === null)) {
+                alert(`Пожалуйста, заполните поле: ${field.label}`);
+                return;
+            }
+        }
+
+        setLoading(true);
+        
+        // Подготавливаем данные, преобразуя строки в числа
+        const preparedInputs = {};
+        for (const [key, value] of Object.entries(inputs)) {
+            if (value === undefined || value === '' || value === null) {
+                preparedInputs[key] = 0;
+            } else {
+                const numValue = Number(value);
+                preparedInputs[key] = isNaN(numValue) ? 0 : numValue;
+            }
+        }
         
         try {
             const response = await fetch(`${API_URL}/calculate`, {
@@ -111,78 +143,47 @@ const CalculatorCard = ({ calculator }) => {
     };
 
     const handleInputChange = (fieldName, value) => {
-        // Обработка пустых значений
+        // Если поле пустое, сохраняем пустую строку
         if (value === '' || value === null || value === undefined) {
-            setInputs({...inputs, [fieldName]: ''});
+            setInputs(prev => ({ ...prev, [fieldName]: '' }));
             return;
         }
         
-        // Преобразуем в число и проверяем
-        const numValue = parseFloat(value);
-        if (!isNaN(numValue)) {
-            setInputs({...inputs, [fieldName]: numValue});
-        } else {
-            setInputs({...inputs, [fieldName]: ''});
-        }
+        // Сохраняем как строку, число будем преобразовывать при отправке
+        setInputs(prev => ({ ...prev, [fieldName]: value }));
     };
 
     // Определяем поля ввода из конфигурации калькулятора
     const renderFields = () => {
+        // Функция для рендера поля
+        const renderInput = (name, label, placeholder) => (
+            <div className="input-group" key={name}>
+                <label>{label}</label>
+                <input
+                    type="number"
+                    step="any"
+                    value={inputs[name] !== undefined && inputs[name] !== '' ? inputs[name] : ''}
+                    onChange={(e) => handleInputChange(name, e.target.value)}
+                    placeholder={placeholder}
+                />
+            </div>
+        );
+
         if (!calculator.fields || calculator.fields.length === 0) {
             // Если полей нет, показываем стандартные поля в зависимости от типа
             if (calculator.name === 'pension') {
                 return (
                     <>
-                        <div className="input-group">
-                            <label>Текущие накопления (₽)</label>
-                            <input 
-                                type="number" 
-                                value={inputs.currentSavings || ''}
-                                onChange={(e) => handleInputChange('currentSavings', e.target.value)}
-                                placeholder="Например: 100000"
-                            />
-                        </div>
-                        <div className="input-group">
-                            <label>Ежемесячный взнос (₽)</label>
-                            <input 
-                                type="number" 
-                                value={inputs.monthlyContribution || ''}
-                                onChange={(e) => handleInputChange('monthlyContribution', e.target.value)}
-                                placeholder="Например: 5000"
-                            />
-                        </div>
-                        <div className="input-group">
-                            <label>Срок (лет)</label>
-                            <input 
-                                type="number" 
-                                value={inputs.years || ''}
-                                onChange={(e) => handleInputChange('years', e.target.value)}
-                                placeholder="Например: 30"
-                            />
-                        </div>
+                        {renderInput('currentSavings', 'Текущие накопления (₽)', 'Например: 100000')}
+                        {renderInput('monthlyContribution', 'Ежемесячный взнос (₽)', 'Например: 5000')}
+                        {renderInput('years', 'Срок (лет)', 'Например: 30')}
                     </>
                 );
             } else {
                 return (
                     <>
-                        <div className="input-group">
-                            <label>Сумма (₽)</label>
-                            <input 
-                                type="number" 
-                                value={inputs.amount || ''}
-                                onChange={(e) => handleInputChange('amount', e.target.value)}
-                                placeholder="Например: 500000"
-                            />
-                        </div>
-                        <div className="input-group">
-                            <label>Срок (лет)</label>
-                            <input 
-                                type="number" 
-                                value={inputs.years || ''}
-                                onChange={(e) => handleInputChange('years', e.target.value)}
-                                placeholder="Например: 5"
-                            />
-                        </div>
+                        {renderInput('amount', 'Сумма (₽)', 'Например: 500000')}
+                        {renderInput('years', 'Срок (лет)', 'Например: 5')}
                     </>
                 );
             }
@@ -192,9 +193,9 @@ const CalculatorCard = ({ calculator }) => {
             <div key={field.name} className="input-group">
                 <label>{field.label}</label>
                 <input
-                    type={field.type || 'number'}
+                    type="number"
                     step="any"
-                    value={inputs[field.name] !== undefined ? inputs[field.name] : ''}
+                    value={inputs[field.name] !== undefined && inputs[field.name] !== '' ? inputs[field.name] : ''}
                     onChange={(e) => handleInputChange(field.name, e.target.value)}
                     placeholder={`Введите ${field.label.toLowerCase()}`}
                 />
@@ -206,10 +207,11 @@ const CalculatorCard = ({ calculator }) => {
         if (!result) return null;
 
         if (calculator.name === 'pension') {
+            const years = inputs.years || '?';
             return (
                 <div className="result">
                     <div className="result-item highlight">
-                        <span>Накопления через {inputs.years || '?'} лет:</span>
+                        <span>Накопления через {years} лет:</span>
                         <strong>{formatMoney(result.totalSavings)}</strong>
                     </div>
                     <div className="result-item">
@@ -259,6 +261,18 @@ const CalculatorCard = ({ calculator }) => {
 
         setSending(true);
         setEmailError('');
+        
+        // Подготавливаем данные для отправки (преобразуем в числа)
+        const preparedInputs = {};
+        for (const [key, value] of Object.entries(inputs)) {
+            if (value === undefined || value === '' || value === null) {
+                preparedInputs[key] = 0;
+            } else {
+                const numValue = Number(value);
+                preparedInputs[key] = isNaN(numValue) ? 0 : numValue;
+            }
+        }
+        
         try {
             const response = await fetch(`${API_URL}/calculate/send-email`, {
                 method: 'POST',
@@ -266,7 +280,7 @@ const CalculatorCard = ({ calculator }) => {
                 body: JSON.stringify({
                     email: email,
                     calculatorType: calculator.name,
-                    inputData: inputs,
+                    inputData: preparedInputs,
                     resultData: result
                 })
             });
