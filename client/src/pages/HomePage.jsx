@@ -1,582 +1,218 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { formatMoney } from '../utils/loanCalculations';
 import './HomePage.css';
 
 // API URL из переменной окружения
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
-// Компонент для отправки email
-const EmailSender = ({ calculatorType, inputData, resultData }) => {
+// Универсальный компонент калькулятора
+const CalculatorCard = ({ calculator }) => {
+    const [inputs, setInputs] = useState({});
+    const [result, setResult] = useState(null);
+    const [loading, setLoading] = useState(false);
     const [email, setEmail] = useState('');
     const [sending, setSending] = useState(false);
     const [sent, setSent] = useState(false);
-    const [error, setError] = useState('');
-    
+    const [emailError, setEmailError] = useState('');
+
+    const calculate = async () => {
+        // Проверяем заполнение всех полей
+        for (const field of calculator.fields || []) {
+            if (field.required && !inputs[field.name]) {
+                alert(`Пожалуйста, заполните поле: ${field.label}`);
+                return;
+            }
+        }
+
+        setLoading(true);
+        try {
+            const response = await fetch(`${API_URL}/calculate`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    type: calculator.name,
+                    inputData: inputs
+                })
+            });
+            const data = await response.json();
+            if (data.success) {
+                setResult(data.result);
+            } else {
+                alert('Ошибка при расчете: ' + (data.message || 'Неизвестная ошибка'));
+            }
+        } catch (error) {
+            console.error('Ошибка:', error);
+            alert('Ошибка подключения к серверу');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const sendToEmail = async () => {
         if (!email) {
-            setError('Введите email');
+            setEmailError('Введите email');
             return;
         }
-        
         const emailRegex = /^[^\s@]+@([^\s@]+\.)+[^\s@]+$/;
         if (!emailRegex.test(email)) {
-            setError('Введите корректный email (например: user@example.com)');
+            setEmailError('Введите корректный email');
             return;
         }
-        
+
         setSending(true);
-        setError('');
-        
+        setEmailError('');
         try {
             const response = await fetch(`${API_URL}/calculate/send-email`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     email: email,
-                    calculatorType: calculatorType,
-                    inputData: inputData,
-                    resultData: resultData
+                    calculatorType: calculator.name,
+                    inputData: inputs,
+                    resultData: result
                 })
             });
-            
             const data = await response.json();
-            
             if (data.success) {
                 setSent(true);
                 setTimeout(() => setSent(false), 5000);
                 setEmail('');
             } else {
-                setError(data.message || 'Ошибка отправки. Попробуйте позже.');
+                setEmailError(data.message || 'Ошибка отправки');
             }
         } catch (error) {
-            console.error('Ошибка отправки email:', error);
-            setError('Не удалось отправить email. Проверьте подключение к интернету.');
+            console.error('Ошибка:', error);
+            setEmailError('Не удалось отправить email');
         } finally {
             setSending(false);
         }
     };
-    
-    return (
-        <div className="email-section">
-            <div className="email-input-group">
+
+    // Определяем поля ввода из конфигурации калькулятора
+    const renderFields = () => {
+        if (!calculator.fields || calculator.fields.length === 0) {
+            // Если полей нет, показываем стандартные поля в зависимости от типа
+            if (calculator.name === 'pension') {
+                return (
+                    <>
+                        <div className="input-group">
+                            <label>Текущие накопления (₽)</label>
+                            <input type="number" onChange={(e) => setInputs({...inputs, currentSavings: parseFloat(e.target.value)})} />
+                        </div>
+                        <div className="input-group">
+                            <label>Ежемесячный взнос (₽)</label>
+                            <input type="number" onChange={(e) => setInputs({...inputs, monthlyContribution: parseFloat(e.target.value)})} />
+                        </div>
+                        <div className="input-group">
+                            <label>Срок (лет)</label>
+                            <input type="number" onChange={(e) => setInputs({...inputs, years: parseFloat(e.target.value)})} />
+                        </div>
+                    </>
+                );
+            } else {
+                return (
+                    <>
+                        <div className="input-group">
+                            <label>Сумма (₽)</label>
+                            <input type="number" onChange={(e) => setInputs({...inputs, amount: parseFloat(e.target.value)})} />
+                        </div>
+                        <div className="input-group">
+                            <label>Срок (лет)</label>
+                            <input type="number" onChange={(e) => setInputs({...inputs, years: parseFloat(e.target.value)})} />
+                        </div>
+                    </>
+                );
+            }
+        }
+
+        return calculator.fields.map((field) => (
+            <div key={field.name} className="input-group">
+                <label>{field.label}</label>
                 <input
-                    type="email"
-                    placeholder="📧 Введите email для отправки результатов"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    disabled={sending}
-                    className="email-input"
+                    type={field.type || 'number'}
+                    step="any"
+                    onChange={(e) => setInputs({...inputs, [field.name]: parseFloat(e.target.value)})}
+                    placeholder={`Введите ${field.label.toLowerCase()}`}
                 />
-                <button 
-                    onClick={sendToEmail} 
-                    disabled={sending || !resultData}
-                    className="send-email-btn"
-                >
-                    {sending ? 'Отправка...' : '📧 Отправить на почту'}
-                </button>
             </div>
-            {error && <div className="email-error">{error}</div>}
-            {sent && <div className="email-success">✓ Результаты успешно отправлены на {email}</div>}
-        </div>
-    );
-};
-
-// Ипотечный калькулятор
-const MortgageCalculator = () => {
-    const [price, setPrice] = useState('');
-    const [downPayment, setDownPayment] = useState('');
-    const [years, setYears] = useState('');
-    const [result, setResult] = useState(null);
-    const [loading, setLoading] = useState(false);
-    const [inputData, setInputData] = useState(null);
-    
-    const calculate = async () => {
-        if (!price || !downPayment || !years) {
-            alert('Пожалуйста, заполните все поля');
-            return;
-        }
-        
-        if (parseFloat(price) <= parseFloat(downPayment)) {
-            alert('Первоначальный взнос не может быть больше или равен стоимости квартиры');
-            return;
-        }
-        
-        setLoading(true);
-        
-        try {
-            const response = await fetch(`${API_URL}/calculate`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    type: 'mortgage',
-                    inputData: {
-                        propertyPrice: parseFloat(price),
-                        downPayment: parseFloat(downPayment),
-                        years: parseFloat(years)
-                    }
-                })
-            });
-            
-            const data = await response.json();
-            
-            if (data.success) {
-                setResult(data.result);
-                setInputData({
-                    propertyPrice: parseFloat(price),
-                    downPayment: parseFloat(downPayment),
-                    years: parseFloat(years)
-                });
-                console.log('✅ Ипотека рассчитана и сохранена');
-            } else {
-                alert('Ошибка при расчете: ' + (data.message || 'Неизвестная ошибка'));
-            }
-        } catch (error) {
-            console.error('Ошибка:', error);
-            alert('Ошибка подключения к серверу. Убедитесь, что сервер запущен.');
-        } finally {
-            setLoading(false);
-        }
+        ));
     };
-    
-    return (
-        <div className="calculator-card">
-            <h2>🏠 Ипотечный калькулятор</h2>
-            <div className="rate-info">Ставка: 9.6% годовых</div>
-            <div className="input-group">
-                <label>Стоимость квартиры (₽)</label>
-                <input 
-                    type="number" 
-                    value={price} 
-                    onChange={(e) => setPrice(e.target.value)}
-                    placeholder="Например: 2000000"
-                    min="0"
-                />
-            </div>
-            <div className="input-group">
-                <label>Первоначальный взнос (₽)</label>
-                <input 
-                    type="number" 
-                    value={downPayment} 
-                    onChange={(e) => setDownPayment(e.target.value)}
-                    placeholder="Например: 500000"
-                    min="0"
-                />
-            </div>
-            <div className="input-group">
-                <label>Срок кредита (лет)</label>
-                <input 
-                    type="number" 
-                    value={years} 
-                    onChange={(e) => setYears(e.target.value)}
-                    placeholder="Например: 20"
-                    min="1"
-                    max="30"
-                />
-            </div>
-            <button onClick={calculate} disabled={loading}>
-                {loading ? 'Расчет...' : 'Рассчитать'}
-            </button>
-            
-            {result && !result.error && (
-                <>
-                    <div className="result">
-                        <div className="result-item highlight">
-                            <span>Ежемесячный платеж:</span>
-                            <strong>{formatMoney(result.monthlyPayment)}</strong>
-                        </div>
-                        <div className="result-item">
-                            <span>Сумма кредита:</span>
-                            <span>{formatMoney(result.loanAmount)}</span>
-                        </div>
-                        <div className="result-item">
-                            <span>Общая сумма выплат:</span>
-                            <span>{formatMoney(result.totalPayment)}</span>
-                        </div>
-                        <div className="result-item">
-                            <span>Переплата:</span>
-                            <span>{formatMoney(result.overpayment)}</span>
-                        </div>
-                        <div className="result-item">
-                            <span>Необходимый доход:</span>
-                            <span>{formatMoney(result.requiredIncome)}</span>
-                        </div>
+
+    const renderResults = () => {
+        if (!result) return null;
+
+        if (calculator.name === 'pension') {
+            return (
+                <div className="result">
+                    <div className="result-item highlight">
+                        <span>Накопления через {inputs.years || '?'} лет:</span>
+                        <strong>{formatMoney(result.totalSavings)}</strong>
                     </div>
-                    <EmailSender 
-                        calculatorType="mortgage"
-                        inputData={inputData}
-                        resultData={result}
-                    />
-                </>
-            )}
-            {result && result.error && <div className="error">{result.error}</div>}
-        </div>
-    );
-};
-
-// Автокредит
-const AutoCreditCalculator = () => {
-    const [price, setPrice] = useState('');
-    const [downPayment, setDownPayment] = useState('');
-    const [years, setYears] = useState('');
-    const [result, setResult] = useState(null);
-    const [loading, setLoading] = useState(false);
-    const [inputData, setInputData] = useState(null);
-    
-    const calculate = async () => {
-        if (!price || !downPayment || !years) {
-            alert('Пожалуйста, заполните все поля');
-            return;
-        }
-        
-        if (parseFloat(price) <= parseFloat(downPayment)) {
-            alert('Первоначальный взнос не может быть больше или равен стоимости автомобиля');
-            return;
-        }
-        
-        setLoading(true);
-        
-        try {
-            const response = await fetch(`${API_URL}/calculate`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    type: 'autocredit',
-                    inputData: {
-                        carPrice: parseFloat(price),
-                        downPayment: parseFloat(downPayment),
-                        years: parseFloat(years)
-                    }
-                })
-            });
-            
-            const data = await response.json();
-            
-            if (data.success) {
-                setResult(data.result);
-                setInputData({
-                    carPrice: parseFloat(price),
-                    downPayment: parseFloat(downPayment),
-                    years: parseFloat(years)
-                });
-                console.log('✅ Автокредит рассчитан и сохранен');
-            } else {
-                alert('Ошибка при расчете: ' + (data.message || 'Неизвестная ошибка'));
-            }
-        } catch (error) {
-            console.error('Ошибка:', error);
-            alert('Ошибка подключения к серверу');
-        } finally {
-            setLoading(false);
-        }
-    };
-    
-    return (
-        <div className="calculator-card">
-            <h2>🚗 Автокредит</h2>
-            <div className="rate-info">Ставка: 3.5% годовых</div>
-            <div className="input-group">
-                <label>Стоимость автомобиля (₽)</label>
-                <input 
-                    type="number" 
-                    value={price} 
-                    onChange={(e) => setPrice(e.target.value)}
-                    placeholder="Например: 1500000"
-                    min="0"
-                />
-            </div>
-            <div className="input-group">
-                <label>Первоначальный взнос (₽)</label>
-                <input 
-                    type="number" 
-                    value={downPayment} 
-                    onChange={(e) => setDownPayment(e.target.value)}
-                    placeholder="Например: 300000"
-                    min="0"
-                />
-            </div>
-            <div className="input-group">
-                <label>Срок кредита (лет)</label>
-                <input 
-                    type="number" 
-                    value={years} 
-                    onChange={(e) => setYears(e.target.value)}
-                    placeholder="Например: 5"
-                    min="1"
-                    max="7"
-                />
-            </div>
-            <button onClick={calculate} disabled={loading}>
-                {loading ? 'Расчет...' : 'Рассчитать'}
-            </button>
-            
-            {result && !result.error && (
-                <>
-                    <div className="result">
-                        <div className="result-item highlight">
-                            <span>Ежемесячный платеж:</span>
-                            <strong>{formatMoney(result.monthlyPayment)}</strong>
-                        </div>
-                        <div className="result-item">
-                            <span>Сумма кредита:</span>
-                            <span>{formatMoney(result.loanAmount)}</span>
-                        </div>
-                        <div className="result-item">
-                            <span>Общая сумма выплат:</span>
-                            <span>{formatMoney(result.totalPayment)}</span>
-                        </div>
-                        <div className="result-item">
-                            <span>Переплата:</span>
-                            <span>{formatMoney(result.overpayment)}</span>
-                        </div>
-                        <div className="result-item">
-                            <span>Необходимый доход:</span>
-                            <span>{formatMoney(result.requiredIncome)}</span>
-                        </div>
+                    <div className="result-item">
+                        <span>Общая сумма взносов:</span>
+                        <span>{formatMoney(result.totalContributions)}</span>
                     </div>
-                    <EmailSender 
-                        calculatorType="autocredit"
-                        inputData={inputData}
-                        resultData={result}
-                    />
-                </>
-            )}
-            {result && result.error && <div className="error">{result.error}</div>}
-        </div>
-    );
-};
+                    <div className="result-item">
+                        <span>Инвестиционный доход:</span>
+                        <span>{formatMoney(result.profit)}</span>
+                    </div>
+                </div>
+            );
+        }
 
-// Потребительский кредит
-const ConsumerCalculator = () => {
-    const [amount, setAmount] = useState('');
-    const [years, setYears] = useState('');
-    const [result, setResult] = useState(null);
-    const [loading, setLoading] = useState(false);
-    const [inputData, setInputData] = useState(null);
-    
-    const calculate = async () => {
-        if (!amount || !years) {
-            alert('Пожалуйста, заполните все поля');
-            return;
-        }
-        
-        setLoading(true);
-        
-        try {
-            const response = await fetch(`${API_URL}/calculate`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    type: 'consumer',
-                    inputData: {
-                        amount: parseFloat(amount),
-                        years: parseFloat(years)
-                    }
-                })
-            });
-            
-            const data = await response.json();
-            
-            if (data.success) {
-                setResult(data.result);
-                setInputData({
-                    amount: parseFloat(amount),
-                    years: parseFloat(years)
-                });
-                console.log('✅ Потребительский кредит рассчитан и сохранен');
-            } else {
-                alert('Ошибка при расчете: ' + (data.message || 'Неизвестная ошибка'));
-            }
-        } catch (error) {
-            console.error('Ошибка:', error);
-            alert('Ошибка подключения к серверу');
-        } finally {
-            setLoading(false);
-        }
+        return (
+            <div className="result">
+                <div className="result-item highlight">
+                    <span>Ежемесячный платеж:</span>
+                    <strong>{formatMoney(result.monthlyPayment)}</strong>
+                </div>
+                <div className="result-item">
+                    <span>Общая сумма выплат:</span>
+                    <span>{formatMoney(result.totalPayment)}</span>
+                </div>
+                <div className="result-item">
+                    <span>Переплата:</span>
+                    <span>{formatMoney(result.overpayment)}</span>
+                </div>
+                <div className="result-item">
+                    <span>Необходимый доход:</span>
+                    <span>{formatMoney(result.requiredIncome)}</span>
+                </div>
+            </div>
+        );
     };
-    
+
     return (
         <div className="calculator-card">
-            <h2>💳 Потребительский кредит</h2>
-            <div className="rate-info">Ставка: 14.5% годовых</div>
-            <div className="input-group">
-                <label>Сумма кредита (₽)</label>
-                <input 
-                    type="number" 
-                    value={amount} 
-                    onChange={(e) => setAmount(e.target.value)}
-                    placeholder="Например: 500000"
-                    min="10000"
-                />
-            </div>
-            <div className="input-group">
-                <label>Срок кредита (лет)</label>
-                <input 
-                    type="number" 
-                    value={years} 
-                    onChange={(e) => setYears(e.target.value)}
-                    placeholder="Например: 3"
-                    min="1"
-                    max="5"
-                />
-            </div>
+            <h2>{calculator.title}</h2>
+            <div className="rate-info">Ставка: {calculator.defaultRate}% годовых</div>
+            
+            {renderFields()}
+            
             <button onClick={calculate} disabled={loading}>
                 {loading ? 'Расчет...' : 'Рассчитать'}
             </button>
+            
+            {renderResults()}
             
             {result && (
-                <>
-                    <div className="result">
-                        <div className="result-item highlight">
-                            <span>Ежемесячный платеж:</span>
-                            <strong>{formatMoney(result.monthlyPayment)}</strong>
-                        </div>
-                        <div className="result-item">
-                            <span>Общая сумма выплат:</span>
-                            <span>{formatMoney(result.totalPayment)}</span>
-                        </div>
-                        <div className="result-item">
-                            <span>Переплата:</span>
-                            <span>{formatMoney(result.overpayment)}</span>
-                        </div>
-                        <div className="result-item">
-                            <span>Необходимый доход:</span>
-                            <span>{formatMoney(result.requiredIncome)}</span>
-                        </div>
+                <div className="email-section">
+                    <div className="email-input-group">
+                        <input
+                            type="email"
+                            placeholder="📧 Введите email для отправки результатов"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            disabled={sending}
+                            className="email-input"
+                        />
+                        <button onClick={sendToEmail} disabled={sending} className="send-email-btn">
+                            {sending ? 'Отправка...' : '📧 Отправить на почту'}
+                        </button>
                     </div>
-                    <EmailSender 
-                        calculatorType="consumer"
-                        inputData={inputData}
-                        resultData={result}
-                    />
-                </>
-            )}
-        </div>
-    );
-};
-
-// Пенсионный калькулятор
-const PensionCalculator = () => {
-    const [current, setCurrent] = useState('');
-    const [monthly, setMonthly] = useState('');
-    const [years, setYears] = useState('');
-    const [result, setResult] = useState(null);
-    const [loading, setLoading] = useState(false);
-    const [inputData, setInputData] = useState(null);
-    
-    const calculate = async () => {
-        if (!years) {
-            alert('Пожалуйста, заполните срок накопления');
-            return;
-        }
-        
-        setLoading(true);
-        
-        try {
-            const response = await fetch(`${API_URL}/calculate`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    type: 'pension',
-                    inputData: {
-                        currentSavings: parseFloat(current) || 0,
-                        monthlyContribution: parseFloat(monthly) || 0,
-                        years: parseFloat(years)
-                    }
-                })
-            });
-            
-            const data = await response.json();
-            
-            if (data.success) {
-                setResult(data.result);
-                setInputData({
-                    currentSavings: parseFloat(current) || 0,
-                    monthlyContribution: parseFloat(monthly) || 0,
-                    years: parseFloat(years)
-                });
-                console.log('✅ Пенсионный расчет выполнен и сохранен');
-            } else {
-                alert('Ошибка при расчете: ' + (data.message || 'Неизвестная ошибка'));
-            }
-        } catch (error) {
-            console.error('Ошибка:', error);
-            alert('Ошибка подключения к серверу');
-        } finally {
-            setLoading(false);
-        }
-    };
-    
-    return (
-        <div className="calculator-card">
-            <h2>💰 Пенсионный калькулятор</h2>
-            <div className="rate-info">Доходность: 7% годовых</div>
-            <div className="input-group">
-                <label>Текущие накопления (₽)</label>
-                <input 
-                    type="number" 
-                    value={current} 
-                    onChange={(e) => setCurrent(e.target.value)}
-                    placeholder="Например: 100000"
-                    min="0"
-                />
-            </div>
-            <div className="input-group">
-                <label>Ежемесячный взнос (₽)</label>
-                <input 
-                    type="number" 
-                    value={monthly} 
-                    onChange={(e) => setMonthly(e.target.value)}
-                    placeholder="Например: 5000"
-                    min="0"
-                />
-            </div>
-            <div className="input-group">
-                <label>Срок накопления (лет)</label>
-                <input 
-                    type="number" 
-                    value={years} 
-                    onChange={(e) => setYears(e.target.value)}
-                    placeholder="Например: 30"
-                    min="1"
-                    max="50"
-                />
-            </div>
-            <button onClick={calculate} disabled={loading}>
-                {loading ? 'Расчет...' : 'Рассчитать'}
-            </button>
-            
-            {result && (
-                <>
-                    <div className="result">
-                        <div className="result-item highlight">
-                            <span>Накопления через {years} лет:</span>
-                            <strong>{formatMoney(result.totalSavings)}</strong>
-                        </div>
-                        <div className="result-item">
-                            <span>Общая сумма взносов:</span>
-                            <span>{formatMoney(result.totalContributions)}</span>
-                        </div>
-                        <div className="result-item">
-                            <span>Инвестиционный доход:</span>
-                            <span>{formatMoney(result.profit)}</span>
-                        </div>
-                    </div>
-                    <EmailSender 
-                        calculatorType="pension"
-                        inputData={inputData}
-                        resultData={result}
-                    />
-                </>
+                    {emailError && <div className="email-error">{emailError}</div>}
+                    {sent && <div className="email-success">✓ Результаты отправлены на {email}</div>}
+                </div>
             )}
         </div>
     );
@@ -584,6 +220,38 @@ const PensionCalculator = () => {
 
 // Главный компонент страницы
 const HomePage = () => {
+    const [calculators, setCalculators] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        fetchCalculators();
+    }, []);
+
+    const fetchCalculators = async () => {
+        try {
+            const response = await fetch(`${API_URL}/calculators`);
+            const data = await response.json();
+            // Показываем только активные калькуляторы
+            const activeCalculators = data.filter(c => c.isActive === true);
+            setCalculators(activeCalculators);
+        } catch (error) {
+            console.error('Ошибка загрузки калькуляторов:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    if (loading) {
+        return (
+            <div className="home-page">
+                <div className="hero">
+                    <h1>Финансовые калькуляторы</h1>
+                    <p>Загрузка...</p>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="home-page">
             <div className="hero">
@@ -592,10 +260,9 @@ const HomePage = () => {
                 <p className="hero-subtitle">Результаты можно отправить на email</p>
             </div>
             <div className="calculators-grid">
-                <MortgageCalculator />
-                <AutoCreditCalculator />
-                <ConsumerCalculator />
-                <PensionCalculator />
+                {calculators.map(calc => (
+                    <CalculatorCard key={calc._id} calculator={calc} />
+                ))}
             </div>
         </div>
     );
