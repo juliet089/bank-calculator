@@ -5,7 +5,6 @@ const CalculatorSchema = new mongoose.Schema({
         type: String, 
         required: true, 
         unique: true,
-        enum: ['mortgage', 'autocredit', 'consumer', 'pension']
     },
     title: { 
         type: String, 
