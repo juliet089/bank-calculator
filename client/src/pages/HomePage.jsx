@@ -15,23 +15,37 @@ const CalculatorCard = ({ calculator }) => {
     const [sent, setSent] = useState(false);
     const [emailError, setEmailError] = useState('');
 
+    // Функция расчета
     const calculate = async () => {
         // Проверяем заполнение всех полей
         for (const field of calculator.fields || []) {
-            if (field.required && !inputs[field.name]) {
+            const value = inputs[field.name];
+            if (field.required && (value === undefined || value === '' || value === null)) {
                 alert(`Пожалуйста, заполните поле: ${field.label}`);
                 return;
             }
         }
 
         setLoading(true);
+        
+        // Подготавливаем данные, преобразуя строки в числа
+        const preparedInputs = {};
+        for (const [key, value] of Object.entries(inputs)) {
+            if (value === undefined || value === '' || value === null) {
+                preparedInputs[key] = 0;
+            } else {
+                const numValue = Number(value);
+                preparedInputs[key] = isNaN(numValue) ? 0 : numValue;
+            }
+        }
+        
         try {
             const response = await fetch(`${API_URL}/calculate`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     type: calculator.name,
-                    inputData: inputs
+                    inputData: preparedInputs
                 })
             });
             const data = await response.json();
@@ -48,6 +62,7 @@ const CalculatorCard = ({ calculator }) => {
         }
     };
 
+    // Функция отправки email
     const sendToEmail = async () => {
         if (!email) {
             setEmailError('Введите email');
@@ -61,6 +76,18 @@ const CalculatorCard = ({ calculator }) => {
 
         setSending(true);
         setEmailError('');
+        
+        // Подготавливаем данные для отправки (преобразуем в числа)
+        const preparedInputs = {};
+        for (const [key, value] of Object.entries(inputs)) {
+            if (value === undefined || value === '' || value === null) {
+                preparedInputs[key] = 0;
+            } else {
+                const numValue = Number(value);
+                preparedInputs[key] = isNaN(numValue) ? 0 : numValue;
+            }
+        }
+        
         try {
             const response = await fetch(`${API_URL}/calculate/send-email`, {
                 method: 'POST',
@@ -68,7 +95,7 @@ const CalculatorCard = ({ calculator }) => {
                 body: JSON.stringify({
                     email: email,
                     calculatorType: calculator.name,
-                    inputData: inputs,
+                    inputData: preparedInputs,
                     resultData: result
                 })
             });
@@ -88,38 +115,43 @@ const CalculatorCard = ({ calculator }) => {
         }
     };
 
-    // Определяем поля ввода из конфигурации калькулятора
+    const handleInputChange = (fieldName, value) => {
+        if (value === '' || value === null || value === undefined) {
+            setInputs(prev => ({ ...prev, [fieldName]: '' }));
+            return;
+        }
+        setInputs(prev => ({ ...prev, [fieldName]: value }));
+    };
+
+    // Рендер полей ввода
     const renderFields = () => {
+        const renderInput = (name, label, placeholder) => (
+            <div className="input-group" key={name}>
+                <label>{label}</label>
+                <input
+                    type="number"
+                    step="any"
+                    value={inputs[name] !== undefined && inputs[name] !== '' ? inputs[name] : ''}
+                    onChange={(e) => handleInputChange(name, e.target.value)}
+                    placeholder={placeholder}
+                />
+            </div>
+        );
+
         if (!calculator.fields || calculator.fields.length === 0) {
-            // Если полей нет, показываем стандартные поля в зависимости от типа
             if (calculator.name === 'pension') {
                 return (
                     <>
-                        <div className="input-group">
-                            <label>Текущие накопления (₽)</label>
-                            <input type="number" onChange={(e) => setInputs({...inputs, currentSavings: parseFloat(e.target.value)})} />
-                        </div>
-                        <div className="input-group">
-                            <label>Ежемесячный взнос (₽)</label>
-                            <input type="number" onChange={(e) => setInputs({...inputs, monthlyContribution: parseFloat(e.target.value)})} />
-                        </div>
-                        <div className="input-group">
-                            <label>Срок (лет)</label>
-                            <input type="number" onChange={(e) => setInputs({...inputs, years: parseFloat(e.target.value)})} />
-                        </div>
+                        {renderInput('currentSavings', 'Текущие накопления (₽)', 'Например: 100000')}
+                        {renderInput('monthlyContribution', 'Ежемесячный взнос (₽)', 'Например: 5000')}
+                        {renderInput('years', 'Срок (лет)', 'Например: 30')}
                     </>
                 );
             } else {
                 return (
                     <>
-                        <div className="input-group">
-                            <label>Сумма (₽)</label>
-                            <input type="number" onChange={(e) => setInputs({...inputs, amount: parseFloat(e.target.value)})} />
-                        </div>
-                        <div className="input-group">
-                            <label>Срок (лет)</label>
-                            <input type="number" onChange={(e) => setInputs({...inputs, years: parseFloat(e.target.value)})} />
-                        </div>
+                        {renderInput('amount', 'Сумма (₽)', 'Например: 500000')}
+                        {renderInput('years', 'Срок (лет)', 'Например: 5')}
                     </>
                 );
             }
@@ -129,23 +161,26 @@ const CalculatorCard = ({ calculator }) => {
             <div key={field.name} className="input-group">
                 <label>{field.label}</label>
                 <input
-                    type={field.type || 'number'}
+                    type={field.type === 'number' ? 'number' : 'text'}
                     step="any"
-                    onChange={(e) => setInputs({...inputs, [field.name]: parseFloat(e.target.value)})}
+                    value={inputs[field.name] !== undefined && inputs[field.name] !== '' ? inputs[field.name] : ''}
+                    onChange={(e) => handleInputChange(field.name, e.target.value)}
                     placeholder={`Введите ${field.label.toLowerCase()}`}
                 />
             </div>
         ));
     };
 
+    // Рендер результатов
     const renderResults = () => {
         if (!result) return null;
 
         if (calculator.name === 'pension') {
+            const years = inputs.years || '?';
             return (
                 <div className="result">
                     <div className="result-item highlight">
-                        <span>Накопления через {inputs.years || '?'} лет:</span>
+                        <span>Накопления через {years} лет:</span>
                         <strong>{formatMoney(result.totalSavings)}</strong>
                     </div>
                     <div className="result-item">
@@ -195,6 +230,7 @@ const CalculatorCard = ({ calculator }) => {
             
             {renderResults()}
             
+            {/* Блок отправки на email - ПОКАЗЫВАЕТСЯ ТОЛЬКО ПОСЛЕ РАСЧЕТА */}
             {result && (
                 <div className="email-section">
                     <div className="email-input-group">
@@ -211,7 +247,7 @@ const CalculatorCard = ({ calculator }) => {
                         </button>
                     </div>
                     {emailError && <div className="email-error">{emailError}</div>}
-                    {sent && <div className="email-success">✓ Результаты отправлены на {email}</div>}
+                    {sent && <div className="email-success">✓ Результаты успешно отправлены на {email}</div>}
                 </div>
             )}
         </div>
