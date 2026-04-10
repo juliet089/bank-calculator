@@ -126,12 +126,23 @@ const AdminPage = () => {
             if (error.response?.data?.message) {
                 setError(error.response.data.message);
             } else if (error.message === 'Network Error') {
-                setError('Ошибка сети. Убедитесь, что сервер запущен на порту 5000');
+                setError('Ошибка сети. Убедитесь, что сервер запущен');
             } else {
                 setError('Ошибка подключения к серверу');
             }
         } finally {
             setLoading(false);
+        }
+    };
+    
+    // Обработка изменения процентной ставки (поддержка точки и запятой)
+    const handleRateChange = (e) => {
+        let value = e.target.value;
+        // Заменяем запятую на точку
+        value = value.replace(',', '.');
+        // Разрешаем только цифры и точку
+        if (value === '' || /^\d*\.?\d*$/.test(value)) {
+            setFormData({...formData, defaultRate: value});
         }
     };
     
@@ -262,7 +273,7 @@ const AdminPage = () => {
         setFormData({
             name: calculator.name,
             title: calculator.title,
-            defaultRate: calculator.defaultRate,
+            defaultRate: String(calculator.defaultRate),
             description: calculator.description || '',
             isActive: calculator.isActive,
             order: calculator.order || 0,
@@ -310,12 +321,24 @@ const AdminPage = () => {
             return;
         }
         
+        // Преобразуем ставку в число
+        const rate = parseFloat(formData.defaultRate.replace(',', '.'));
+        if (isNaN(rate)) {
+            alert('Введите корректную процентную ставку');
+            return;
+        }
+        
+        const saveData = {
+            ...formData,
+            defaultRate: rate
+        };
+        
         try {
             if (editingCalculator) {
-                await api.put(`/admin/calculators/${editingCalculator._id}`, formData);
+                await api.put(`/admin/calculators/${editingCalculator._id}`, saveData);
                 alert('✅ Калькулятор успешно обновлен');
             } else {
-                await api.post('/admin/calculators', formData);
+                await api.post('/admin/calculators', saveData);
                 alert('✅ Калькулятор успешно создан');
             }
             setShowForm(false);
@@ -490,7 +513,6 @@ const AdminPage = () => {
                             </div>
                             
                             {isMobile ? (
-                                // Мобильный вид - карточки
                                 <div className="mobile-cards">
                                     {calculations.map((calc) => (
                                         <div key={calc._id} className="mobile-card">
@@ -512,7 +534,6 @@ const AdminPage = () => {
                                     ))}
                                 </div>
                             ) : (
-                                // Десктопный вид - таблица
                                 <div className="table-container">
                                     <table className="calculations-table">
                                         <thead>
@@ -763,7 +784,7 @@ const AdminPage = () => {
                         <form onSubmit={handleSaveCalculator}>
                             <div className="details-content">
                                 <div className="form-group">
-                                    <label>Идентификатор *</label>
+                                    <label>Идентификатор (name) *</label>
                                     <input
                                         type="text"
                                         value={formData.name}
@@ -772,6 +793,7 @@ const AdminPage = () => {
                                         required
                                         disabled={!!editingCalculator}
                                     />
+                                    <small>Уникальный идентификатор, используется в API</small>
                                 </div>
                                 
                                 <div className="form-group">
@@ -788,13 +810,13 @@ const AdminPage = () => {
                                 <div className="form-group">
                                     <label>Процентная ставка (%) *</label>
                                     <input
-                                        type="number"
-                                        step="0.1"
+                                        type="text"
                                         value={formData.defaultRate}
-                                        onChange={(e) => setFormData({...formData, defaultRate: parseFloat(e.target.value)})}
+                                        onChange={handleRateChange}
                                         placeholder="9.6"
                                         required
                                     />
+                                    <small>Используйте точку или запятую</small>
                                 </div>
                                 
                                 <div className="form-group">
@@ -804,6 +826,15 @@ const AdminPage = () => {
                                         onChange={(e) => setFormData({...formData, description: e.target.value})}
                                         rows="3"
                                         placeholder="Описание калькулятора"
+                                    />
+                                </div>
+                                
+                                <div className="form-group">
+                                    <label>Порядок сортировки</label>
+                                    <input
+                                        type="number"
+                                        value={formData.order}
+                                        onChange={(e) => setFormData({...formData, order: parseInt(e.target.value) || 0})}
                                     />
                                 </div>
                                 
@@ -824,13 +855,13 @@ const AdminPage = () => {
                                         <div key={index} className="field-item">
                                             <input
                                                 type="text"
-                                                placeholder="Имя поля"
+                                                placeholder="Имя поля (name)"
                                                 value={field.name}
                                                 onChange={(e) => updateField(index, 'name', e.target.value)}
                                             />
                                             <input
                                                 type="text"
-                                                placeholder="Метка"
+                                                placeholder="Метка (label)"
                                                 value={field.label}
                                                 onChange={(e) => updateField(index, 'label', e.target.value)}
                                             />
