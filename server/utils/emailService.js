@@ -1,10 +1,23 @@
-const sgMail = require('@sendgrid/mail');
+const nodemailer = require('nodemailer');
 
-// Настройка SendGrid если есть API ключ
-if (process.env.SENDGRID_API_KEY) {
-    sgMail.setApiKey(process.env.SENDGRID_API_KEY);
-    console.log('📧 SendGrid инициализирован');
-}
+let transporter = null;
+
+const getTransporter = () => {
+    if (!transporter) {
+        console.log('📧 Используется Gmail SMTP');
+        transporter = nodemailer.createTransport({
+            service: 'gmail',
+            auth: {
+                user: process.env.EMAIL_USER,
+                pass: process.env.EMAIL_PASS
+            },
+            connectionTimeout: 30000,
+            greetingTimeout: 30000,
+            socketTimeout: 30000
+        });
+    }
+    return transporter;
+};
 
 const formatMoney = (amount) => {
     if (!amount && amount !== 0) return '—';
@@ -60,19 +73,13 @@ const generateEmailTemplate = (calculatorType, inputData, resultData) => {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Результаты расчета - ${title}</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
             line-height: 1.6;
             color: #333;
             background-color: #f5f5f5;
         }
-        
         .container {
             max-width: 600px;
             margin: 20px auto;
@@ -81,26 +88,14 @@ const generateEmailTemplate = (calculatorType, inputData, resultData) => {
             overflow: hidden;
             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
         }
-        
         .header {
             background: linear-gradient(135deg, #0047ab 0%, #0066cc 100%);
             color: white;
             padding: 32px 24px;
             text-align: center;
         }
-        
-        .header h1 {
-            margin: 0 0 8px 0;
-            font-size: 28px;
-            font-weight: 700;
-        }
-        
-        .header .date {
-            font-size: 14px;
-            opacity: 0.9;
-            margin-top: 8px;
-        }
-        
+        .header h1 { margin: 0 0 8px 0; font-size: 28px; font-weight: 700; }
+        .header .date { font-size: 14px; opacity: 0.9; margin-top: 8px; }
         .header .badge {
             display: inline-block;
             background: rgba(255, 255, 255, 0.2);
@@ -109,18 +104,13 @@ const generateEmailTemplate = (calculatorType, inputData, resultData) => {
             font-size: 12px;
             margin-top: 12px;
         }
-        
-        .content {
-            padding: 32px;
-        }
-        
+        .content { padding: 32px; }
         .info-section {
             background: #f8f9fa;
             border-radius: 12px;
             padding: 20px;
             margin-bottom: 24px;
         }
-        
         .info-section h3 {
             margin: 0 0 16px 0;
             color: #0047ab;
@@ -130,7 +120,6 @@ const generateEmailTemplate = (calculatorType, inputData, resultData) => {
             align-items: center;
             gap: 8px;
         }
-        
         .result-item {
             display: flex;
             justify-content: space-between;
@@ -138,11 +127,7 @@ const generateEmailTemplate = (calculatorType, inputData, resultData) => {
             padding: 12px 0;
             border-bottom: 1px solid #e5e7eb;
         }
-        
-        .result-item:last-child {
-            border-bottom: none;
-        }
-        
+        .result-item:last-child { border-bottom: none; }
         .result-item.highlight {
             background: linear-gradient(135deg, #fff5e6 0%, #fff0e0 100%);
             padding: 16px;
@@ -150,23 +135,9 @@ const generateEmailTemplate = (calculatorType, inputData, resultData) => {
             border-radius: 12px;
             border-bottom: none;
         }
-        
-        .result-label {
-            font-weight: 500;
-            color: #6b7280;
-            font-size: 14px;
-        }
-        
-        .result-value {
-            font-weight: 700;
-            color: #0047ab;
-            font-size: 18px;
-        }
-        
-        .result-value.large {
-            font-size: 24px;
-        }
-        
+        .result-label { font-weight: 500; color: #6b7280; font-size: 14px; }
+        .result-value { font-weight: 700; color: #0047ab; font-size: 18px; }
+        .result-value.large { font-size: 24px; }
         .footer {
             background: #f8f9fa;
             padding: 24px;
@@ -175,7 +146,6 @@ const generateEmailTemplate = (calculatorType, inputData, resultData) => {
             color: #9ca3af;
             border-top: 1px solid #e5e7eb;
         }
-        
         .note {
             background: #fef3c7;
             border-left: 4px solid #f59e0b;
@@ -185,36 +155,13 @@ const generateEmailTemplate = (calculatorType, inputData, resultData) => {
             font-size: 13px;
             color: #92400e;
         }
-        
-        .note strong {
-            font-weight: 600;
-        }
-        
         @media (max-width: 600px) {
-            .container {
-                margin: 10px;
-                border-radius: 12px;
-            }
-            
-            .header {
-                padding: 24px 20px;
-            }
-            
-            .header h1 {
-                font-size: 24px;
-            }
-            
-            .content {
-                padding: 20px;
-            }
-            
-            .result-value {
-                font-size: 16px;
-            }
-            
-            .result-value.large {
-                font-size: 20px;
-            }
+            .container { margin: 10px; border-radius: 12px; }
+            .header { padding: 24px 20px; }
+            .header h1 { font-size: 24px; }
+            .content { padding: 20px; }
+            .result-value { font-size: 16px; }
+            .result-value.large { font-size: 20px; }
         }
     </style>
 </head>
@@ -225,7 +172,6 @@ const generateEmailTemplate = (calculatorType, inputData, resultData) => {
             <div class="date">${currentDate}</div>
             <div class="badge">Результаты финансового расчета</div>
         </div>
-        
         <div class="content">
             <div class="info-section">
                 <h3>📝 Введенные данные</h3>`;
@@ -302,7 +248,6 @@ const generateEmailTemplate = (calculatorType, inputData, resultData) => {
     
     html += `
             </div>
-            
             <div class="info-section">
                 <h3>📈 Результаты расчета</h3>`;
     
@@ -357,18 +302,14 @@ const generateEmailTemplate = (calculatorType, inputData, resultData) => {
     
     html += `
             </div>
-            
             <div class="note">
                 <strong>ℹ️ Важно:</strong> Данный расчет носит ознакомительный характер.<br>
-                Точные условия кредитования уточняйте в отделении банка.<br>
-                Для получения официального предложения обратитесь к специалисту.
+                Точные условия кредитования уточняйте в отделении банка.
             </div>
         </div>
-        
         <div class="footer">
             <p>© ${new Date().getFullYear()} Финансовый калькулятор</p>
             <p>Это автоматическое сообщение, пожалуйста, не отвечайте на него.</p>
-            <p style="margin-top: 8px; font-size: 11px;">Если вы не запрашивали этот расчет, проигнорируйте данное письмо.</p>
         </div>
     </div>
 </body>
@@ -379,22 +320,22 @@ const generateEmailTemplate = (calculatorType, inputData, resultData) => {
 
 const sendCalculationResult = async (toEmail, calculatorType, inputData, resultData) => {
     try {
-        // Получаем email отправителя (поддерживаем оба варианта для совместимости)
-        const fromEmail = process.env.EMAIL_FROM || process.env.EMAIL_USER;
+        const fromEmail = process.env.EMAIL_USER;
         const fromName = process.env.EMAIL_FROM_NAME || 'Финансовый калькулятор';
         
-        // Если нет отправителя - демо-режим
         if (!fromEmail) {
-            console.log('⚠️ EMAIL_FROM не настроен, используем демо-режим');
-            console.log('📧 Демо-режим: отправка на', toEmail);
-            console.log('📊 Данные расчета:', { calculatorType, inputData, resultData });
-            
-            return { 
-                success: true, 
-                demo: true,
-                message: 'Функция отправки email реализована (демо-режим). Для реальной отправки настройте EMAIL_FROM и SENDGRID_API_KEY.' 
-            };
+            throw new Error('EMAIL_USER не настроен в .env файле');
         }
+        
+        if (!process.env.EMAIL_PASS) {
+            throw new Error('EMAIL_PASS не настроен в .env файле');
+        }
+        
+        const transporter = getTransporter();
+        
+        // Проверяем подключение
+        await transporter.verify();
+        console.log('✅ SMTP подключение проверено');
         
         const title = {
             mortgage: 'Ипотечный калькулятор',
@@ -423,97 +364,50 @@ ${JSON.stringify(resultData, null, 2)}
 Это автоматическое сообщение, пожалуйста, не отвечайте на него.
         `;
         
-        // Если есть SendGrid API ключ - отправляем реальное письмо
-        if (process.env.SENDGRID_API_KEY) {
-            const msg = {
-                to: toEmail,
-                from: {
-                    email: fromEmail,
-                    name: fromName
-                },
-                subject: `Результаты расчета - ${title} (${new Date().toLocaleDateString('ru-RU')})`,
-                html: html,
-                text: textContent
-            };
-            
-            console.log(`📧 Отправка email через SendGrid на ${toEmail}...`);
-            const response = await sgMail.send(msg);
-            console.log('✅ Email успешно отправлен через SendGrid!');
-            console.log(`   📬 Получатель: ${toEmail}`);
-            console.log(`   📊 Статус: ${response[0].statusCode}`);
-            
-            return { 
-                success: true, 
-                demo: false,
-                message: 'Результаты успешно отправлены на указанный email' 
-            };
-        } 
+        const mailOptions = {
+            from: `"${fromName}" <${fromEmail}>`,
+            to: toEmail,
+            subject: `Результаты расчета - ${title} (${new Date().toLocaleDateString('ru-RU')})`,
+            html: html,
+            text: textContent,
+            headers: {
+                'X-Priority': '3',
+                'X-MSMail-Priority': 'Normal',
+                'X-Mailer': 'Financial Calculator v1.0'
+            }
+        };
         
-        // Если нет SendGrid ключа - демо-режим
-        else {
-            console.log('⚠️ SENDGRID_API_KEY не настроен, используем демо-режим');
-            console.log('📧 Демо-режим: отправка на', toEmail);
-            console.log('📊 Данные расчета:', { calculatorType, inputData, resultData });
-            
-            return { 
-                success: true, 
-                demo: true,
-                message: 'Функция отправки email реализована (демо-режим). Для реальной отправки настройте SENDGRID_API_KEY.' 
-            };
-        }
+        console.log(`📧 Отправка email через Gmail на ${toEmail}...`);
+        const info = await transporter.sendMail(mailOptions);
+        
+        console.log('✅ Email успешно отправлен через Gmail!');
+        console.log(`   📝 ID: ${info.messageId}`);
+        console.log(`   📬 Получатель: ${toEmail}`);
+        
+        return { 
+            success: true, 
+            messageId: info.messageId,
+            to: toEmail,
+            subject: mailOptions.subject
+        };
         
     } catch (error) {
-        console.error('❌ Ошибка отправки email:', error.response?.body || error.message);
+        console.error('❌ Ошибка отправки email:', error.message);
         
-        if (error.response?.body?.errors) {
-            const errors = error.response.body.errors;
-            throw new Error(`Ошибка SendGrid: ${errors.map(e => e.message).join(', ')}`);
+        if (error.message.includes('Invalid login') || error.message.includes('535')) {
+            throw new Error('Ошибка аутентификации. Проверьте EMAIL_USER и EMAIL_PASS в .env');
+        } else if (error.message.includes('ECONNREFUSED') || error.message.includes('ETIMEDOUT')) {
+            throw new Error('Не удалось подключиться к SMTP серверу. Проверьте интернет-соединение.');
+        } else if (error.message.includes('550')) {
+            throw new Error('Email получателя отклонен. Проверьте правильность адреса.');
         } else {
             throw new Error(`Не удалось отправить email: ${error.message}`);
         }
     }
 };
 
-const testEmailConfig = async (testEmail = null) => {
-    const fromEmail = process.env.EMAIL_FROM || process.env.EMAIL_USER;
-    const targetEmail = testEmail || fromEmail;
-    
-    if (!targetEmail) {
-        throw new Error('Не указан email для тестирования');
-    }
-    
-    const testData = {
-        calculatorType: 'mortgage',
-        inputData: {
-            propertyPrice: 2000000,
-            downPayment: 500000,
-            years: 20
-        },
-        resultData: {
-            monthlyPayment: 14080,
-            loanAmount: 1500000,
-            totalPayment: 3379200,
-            overpayment: 1879200,
-            requiredIncome: 35200
-        }
-    };
-    
-    console.log('🔍 Тестирование отправки email...');
-    console.log(`📧 Отправитель: ${fromEmail || 'не настроен'}`);
-    console.log(`📬 Получатель: ${targetEmail}`);
-    console.log(`🔑 SendGrid API ключ: ${process.env.SENDGRID_API_KEY ? '✅ установлен' : '❌ не установлен'}`);
-    
-    return await sendCalculationResult(
-        targetEmail,
-        testData.calculatorType,
-        testData.inputData,
-        testData.resultData
-    );
-};
-
 module.exports = { 
     sendCalculationResult,
-    testEmailConfig,
     formatMoney,
     generateEmailTemplate
 };
