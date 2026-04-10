@@ -58,132 +58,68 @@ const CalculatorCard = ({ calculator }) => {
             setEmailError('Введите корректный email');
             return;
         }
-// Универсальный компонент калькулятора
-const CalculatorCard = ({ calculator }) => {
-    const [inputs, setInputs] = useState({});
-    const [result, setResult] = useState(null);
-    const [loading, setLoading] = useState(false);
-    const [email, setEmail] = useState('');
-    const [sending, setSending] = useState(false);
-    const [sent, setSent] = useState(false);
-    const [emailError, setEmailError] = useState('');
 
-    const calculate = async () => {
-        // Проверяем заполнение всех полей
-        for (const field of calculator.fields || []) {
-            if (field.required && (!inputs[field.name] && inputs[field.name] !== 0)) {
-                alert(`Пожалуйста, заполните поле: ${field.label}`);
-                return;
-            }
-        }
-
-        setLoading(true);
-        
-        // Подготавливаем данные, преобразуя строки в числа
-        const preparedInputs = {};
-        for (const [key, value] of Object.entries(inputs)) {
-            // Преобразуем в число, если это возможно
-            const numValue = parseFloat(value);
-            preparedInputs[key] = isNaN(numValue) ? 0 : numValue;
-        }
-        // Универсальный компонент калькулятора
-const CalculatorCard = ({ calculator }) => {
-    const [inputs, setInputs] = useState({});
-    const [result, setResult] = useState(null);
-    const [loading, setLoading] = useState(false);
-    const [email, setEmail] = useState('');
-    const [sending, setSending] = useState(false);
-    const [sent, setSent] = useState(false);
-    const [emailError, setEmailError] = useState('');
-
-    const calculate = async () => {
-        // Проверяем заполнение всех полей
-        for (const field of calculator.fields || []) {
-            const value = inputs[field.name];
-            if (field.required && (value === undefined || value === '' || value === null)) {
-                alert(`Пожалуйста, заполните поле: ${field.label}`);
-                return;
-            }
-        }
-
-        setLoading(true);
-        
-        // Подготавливаем данные, преобразуя строки в числа
-        const preparedInputs = {};
-        for (const [key, value] of Object.entries(inputs)) {
-            if (value === undefined || value === '' || value === null) {
-                preparedInputs[key] = 0;
-            } else {
-                const numValue = Number(value);
-                preparedInputs[key] = isNaN(numValue) ? 0 : numValue;
-            }
-        }
-        
+        setSending(true);
+        setEmailError('');
         try {
-            const response = await fetch(`${API_URL}/calculate`, {
+            const response = await fetch(`${API_URL}/calculate/send-email`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    type: calculator.name,
-                    inputData: preparedInputs
+                    email: email,
+                    calculatorType: calculator.name,
+                    inputData: inputs,
+                    resultData: result
                 })
             });
             const data = await response.json();
             if (data.success) {
-                setResult(data.result);
+                setSent(true);
+                setTimeout(() => setSent(false), 5000);
+                setEmail('');
             } else {
-                alert('Ошибка при расчете: ' + (data.message || 'Неизвестная ошибка'));
+                setEmailError(data.message || 'Ошибка отправки');
             }
         } catch (error) {
             console.error('Ошибка:', error);
-            alert('Ошибка подключения к серверу');
+            setEmailError('Не удалось отправить email');
         } finally {
-            setLoading(false);
+            setSending(false);
         }
-    };
-
-    const handleInputChange = (fieldName, value) => {
-        // Если поле пустое, сохраняем пустую строку
-        if (value === '' || value === null || value === undefined) {
-            setInputs(prev => ({ ...prev, [fieldName]: '' }));
-            return;
-        }
-        
-        // Сохраняем как строку, число будем преобразовывать при отправке
-        setInputs(prev => ({ ...prev, [fieldName]: value }));
     };
 
     // Определяем поля ввода из конфигурации калькулятора
     const renderFields = () => {
-        // Функция для рендера поля
-        const renderInput = (name, label, placeholder) => (
-            <div className="input-group" key={name}>
-                <label>{label}</label>
-                <input
-                    type="number"
-                    step="any"
-                    value={inputs[name] !== undefined && inputs[name] !== '' ? inputs[name] : ''}
-                    onChange={(e) => handleInputChange(name, e.target.value)}
-                    placeholder={placeholder}
-                />
-            </div>
-        );
-
         if (!calculator.fields || calculator.fields.length === 0) {
             // Если полей нет, показываем стандартные поля в зависимости от типа
             if (calculator.name === 'pension') {
                 return (
                     <>
-                        {renderInput('currentSavings', 'Текущие накопления (₽)', 'Например: 100000')}
-                        {renderInput('monthlyContribution', 'Ежемесячный взнос (₽)', 'Например: 5000')}
-                        {renderInput('years', 'Срок (лет)', 'Например: 30')}
+                        <div className="input-group">
+                            <label>Текущие накопления (₽)</label>
+                            <input type="number" onChange={(e) => setInputs({...inputs, currentSavings: parseFloat(e.target.value)})} />
+                        </div>
+                        <div className="input-group">
+                            <label>Ежемесячный взнос (₽)</label>
+                            <input type="number" onChange={(e) => setInputs({...inputs, monthlyContribution: parseFloat(e.target.value)})} />
+                        </div>
+                        <div className="input-group">
+                            <label>Срок (лет)</label>
+                            <input type="number" onChange={(e) => setInputs({...inputs, years: parseFloat(e.target.value)})} />
+                        </div>
                     </>
                 );
             } else {
                 return (
                     <>
-                        {renderInput('amount', 'Сумма (₽)', 'Например: 500000')}
-                        {renderInput('years', 'Срок (лет)', 'Например: 5')}
+                        <div className="input-group">
+                            <label>Сумма (₽)</label>
+                            <input type="number" onChange={(e) => setInputs({...inputs, amount: parseFloat(e.target.value)})} />
+                        </div>
+                        <div className="input-group">
+                            <label>Срок (лет)</label>
+                            <input type="number" onChange={(e) => setInputs({...inputs, years: parseFloat(e.target.value)})} />
+                        </div>
                     </>
                 );
             }
@@ -193,10 +129,9 @@ const CalculatorCard = ({ calculator }) => {
             <div key={field.name} className="input-group">
                 <label>{field.label}</label>
                 <input
-                    type="number"
+                    type={field.type || 'number'}
                     step="any"
-                    value={inputs[field.name] !== undefined && inputs[field.name] !== '' ? inputs[field.name] : ''}
-                    onChange={(e) => handleInputChange(field.name, e.target.value)}
+                    onChange={(e) => setInputs({...inputs, [field.name]: parseFloat(e.target.value)})}
                     placeholder={`Введите ${field.label.toLowerCase()}`}
                 />
             </div>
@@ -207,11 +142,10 @@ const CalculatorCard = ({ calculator }) => {
         if (!result) return null;
 
         if (calculator.name === 'pension') {
-            const years = inputs.years || '?';
             return (
                 <div className="result">
                     <div className="result-item highlight">
-                        <span>Накопления через {years} лет:</span>
+                        <span>Накопления через {inputs.years || '?'} лет:</span>
                         <strong>{formatMoney(result.totalSavings)}</strong>
                     </div>
                     <div className="result-item">
@@ -246,58 +180,6 @@ const CalculatorCard = ({ calculator }) => {
                 </div>
             </div>
         );
-    };
-
-    const sendToEmail = async () => {
-        if (!email) {
-            setEmailError('Введите email');
-            return;
-        }
-        const emailRegex = /^[^\s@]+@([^\s@]+\.)+[^\s@]+$/;
-        if (!emailRegex.test(email)) {
-            setEmailError('Введите корректный email');
-            return;
-        }
-
-        setSending(true);
-        setEmailError('');
-        
-        // Подготавливаем данные для отправки (преобразуем в числа)
-        const preparedInputs = {};
-        for (const [key, value] of Object.entries(inputs)) {
-            if (value === undefined || value === '' || value === null) {
-                preparedInputs[key] = 0;
-            } else {
-                const numValue = Number(value);
-                preparedInputs[key] = isNaN(numValue) ? 0 : numValue;
-            }
-        }
-        
-        try {
-            const response = await fetch(`${API_URL}/calculate/send-email`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    email: email,
-                    calculatorType: calculator.name,
-                    inputData: preparedInputs,
-                    resultData: result
-                })
-            });
-            const data = await response.json();
-            if (data.success) {
-                setSent(true);
-                setTimeout(() => setSent(false), 5000);
-                setEmail('');
-            } else {
-                setEmailError(data.message || 'Ошибка отправки');
-            }
-        } catch (error) {
-            console.error('Ошибка:', error);
-            setEmailError('Не удалось отправить email');
-        } finally {
-            setSending(false);
-        }
     };
 
     return (
