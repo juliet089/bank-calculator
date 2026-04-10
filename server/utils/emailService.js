@@ -6,14 +6,13 @@ let transporter = null;
 const getTransporter = () => {
     if (!transporter) {
         transporter = nodemailer.createTransport({
-            service: 'gmail',
+            host: 'smtp.gmail.com',
+            port: 465,
+            secure: true, // true для порта 465
             auth: {
                 user: process.env.EMAIL_USER,
                 pass: process.env.EMAIL_PASS
-            },
-            pool: true,
-            maxConnections: 5,
-            maxMessages: 100
+            }
         });
     }
     return transporter;
