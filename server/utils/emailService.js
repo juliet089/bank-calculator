@@ -4,21 +4,13 @@ let transporter = null;
 
 const getTransporter = () => {
     if (!transporter) {
-        console.log('📧 Используется Timeweb SMTP');
+        console.log('📧 Используется Gmail SMTP');
         transporter = nodemailer.createTransport({
-            host: process.env.EMAIL_HOST || 'smtp.timeweb.ru',
-            port: parseInt(process.env.EMAIL_PORT) || 465,
-            secure: process.env.EMAIL_SECURE === 'true' || true,
+            service: 'gmail',
             auth: {
                 user: process.env.EMAIL_USER,
                 pass: process.env.EMAIL_PASS
-            },
-            tls: {
-                rejectUnauthorized: false
-            },
-            connectionTimeout: 30000,
-            greetingTimeout: 30000,
-            socketTimeout: 30000
+            }
         });
     }
     return transporter;
@@ -326,20 +318,20 @@ const generateEmailTemplate = (calculatorType, inputData, resultData) => {
 const sendCalculationResult = async (toEmail, calculatorType, inputData, resultData) => {
     try {
         const fromEmail = process.env.EMAIL_USER;
-        const fromName = process.env.EMAIL_FROM_NAME || 'Финансовый калькулятор';
         
         if (!fromEmail) {
-            throw new Error('EMAIL_USER не настроен в .env файле');
+            throw new Error('EMAIL_USER не настроен');
         }
         
         if (!process.env.EMAIL_PASS) {
-            throw new Error('EMAIL_PASS не настроен в .env файле');
+            throw new Error('EMAIL_PASS не настроен');
         }
         
         const transporter = getTransporter();
         
+        // Проверяем подключение
         await transporter.verify();
-        console.log('✅ Timeweb SMTP подключение проверено');
+        console.log('✅ Gmail SMTP подключение проверено');
         
         const title = {
             mortgage: 'Ипотечный калькулятор',
@@ -350,50 +342,21 @@ const sendCalculationResult = async (toEmail, calculatorType, inputData, resultD
         
         const html = generateEmailTemplate(calculatorType, inputData, resultData);
         
-        const textContent = `
-${title} - Результаты расчета
-
-Дата: ${new Date().toLocaleString('ru-RU')}
-
-Введенные данные:
-${JSON.stringify(inputData, null, 2)}
-
-Результаты:
-${JSON.stringify(resultData, null, 2)}
-
-Важно: Данный расчет носит ознакомительный характер. 
-Точные условия кредитования уточняйте в отделении банка.
-
----
-Это автоматическое сообщение, пожалуйста, не отвечайте на него.
-        `;
-        
         const mailOptions = {
-            from: `"${fromName}" <${fromEmail}>`,
+            from: `"Финансовый калькулятор" <${fromEmail}>`,
             to: toEmail,
             subject: `Результаты расчета - ${title} (${new Date().toLocaleDateString('ru-RU')})`,
             html: html,
-            text: textContent,
-            headers: {
-                'X-Priority': '3',
-                'X-MSMail-Priority': 'Normal',
-                'X-Mailer': 'Financial Calculator v1.0'
-            }
+            text: `Результаты расчета ${title}`
         };
         
-        console.log(`📧 Отправка email через Timeweb на ${toEmail}...`);
+        console.log(`📧 Отправка email через Gmail на ${toEmail}...`);
         const info = await transporter.sendMail(mailOptions);
         
-        console.log('✅ Email успешно отправлен через Timeweb!');
+        console.log('✅ Email успешно отправлен через Gmail!');
         console.log(`   📝 ID: ${info.messageId}`);
-        console.log(`   📬 Получатель: ${toEmail}`);
         
-        return { 
-            success: true, 
-            messageId: info.messageId,
-            to: toEmail,
-            subject: mailOptions.subject
-        };
+        return { success: true, messageId: info.messageId };
         
     } catch (error) {
         console.error('❌ Ошибка отправки email:', error.message);
@@ -401,8 +364,4 @@ ${JSON.stringify(resultData, null, 2)}
     }
 };
 
-module.exports = { 
-    sendCalculationResult,
-    formatMoney,
-    generateEmailTemplate
-};
+module.exports = { sendCalculationResult, formatMoney, generateEmailTemplate };
