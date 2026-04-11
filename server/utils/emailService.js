@@ -355,28 +355,26 @@ const sendCalculationResult = async (toEmail, calculatorType, inputData, resultD
         console.log(`📥 Статус ответа: ${response.status}`);
         console.log(`📥 Данные ответа:`, JSON.stringify(response.data, null, 2));
         
+        // Полный ответ от Sendsay
+        console.log(`📥 Полный ответ:`, JSON.stringify(response.data, null, 2));
+
         if (response.data && response.data.status === 'ok') {
             console.log('✅ Email успешно отправлен через Sendsay!');
             console.log(`   📬 Получатель: ${toEmail}`);
-            console.log(`   📝 ID: ${response.data.id || 'не указан'}`);
-            return { success: true, id: response.data.id };
+            return { success: true };
         } else if (response.data && response.data.errors) {
-            throw new Error(response.data.errors.map(e => e.message).join(', '));
+            console.error('❌ Ошибки Sendsay:');
+            response.data.errors.forEach(err => {
+                console.error(`   - ${err.message || JSON.stringify(err)}`);
+            });
+            throw new Error(response.data.errors[0]?.message || 'Ошибка Sendsay');
+        } else if (response.data && response.data.error) {
+            console.error(`❌ Ошибка Sendsay: ${response.data.error}`);
+            throw new Error(response.data.error);
         } else {
-            throw new Error(response.data?.error || 'Неизвестная ошибка');
+            console.error('❌ Неизвестный ответ от Sendsay');
+            throw new Error('Неизвестная ошибка');
         }
-        
-    } catch (error) {
-        console.error('❌ Ошибка Sendsay:');
-        if (error.response) {
-            console.error(`   Статус: ${error.response.status}`);
-            console.error(`   Данные:`, error.response.data);
-        } else if (error.request) {
-            console.error(`   Нет ответа от сервера: ${error.message}`);
-        } else {
-            console.error(`   Ошибка: ${error.message}`);
-        }
-        throw new Error(`Не удалось отправить email: ${error.message}`);
     }
 };
 
