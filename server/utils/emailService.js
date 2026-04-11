@@ -1,10 +1,7 @@
-const sgMail = require('@sendgrid/mail');
+const axios = require('axios');
 
-// Настройка SendGrid
-if (process.env.SENDGRID_API_KEY) {
-    sgMail.setApiKey(process.env.SENDGRID_API_KEY);
-    console.log('📧 SendGrid инициализирован');
-}
+const UNISENDER_API_KEY = process.env.UNISENDER_API_KEY;
+const UNISENDER_API_URL = 'https://api.unisender.com/ru/api/sendemail';
 
 const formatMoney = (amount) => {
     if (!amount && amount !== 0) return '—';
@@ -307,12 +304,8 @@ const generateEmailTemplate = (calculatorType, inputData, resultData) => {
 
 const sendCalculationResult = async (toEmail, calculatorType, inputData, resultData) => {
     try {
-        if (!process.env.SENDGRID_API_KEY) {
-            throw new Error('SENDGRID_API_KEY не настроен');
-        }
-        
-        if (!process.env.EMAIL_FROM) {
-            throw new Error('EMAIL_FROM не настроен');
+        if (!UNISENDER_API_KEY) {
+            throw new Error('UNISENDER_API_KEY не настроен');
         }
         
         const title = {
@@ -324,29 +317,38 @@ const sendCalculationResult = async (toEmail, calculatorType, inputData, resultD
         
         const html = generateEmailTemplate(calculatorType, inputData, resultData);
         
-        const msg = {
-            to: toEmail,
-            from: process.env.EMAIL_FROM,
-            subject: `Результаты расчета - ${title} (${new Date().toLocaleDateString('ru-RU')})`,
-            html: html,
-            text: `Результаты расчета ${title}`
-        };
+        const textContent = `${title} - Результаты расчета\n\nДата: ${new Date().toLocaleString('ru-RU')}\n\nВведенные данные:\n${JSON.stringify(inputData, null, 2)}\n\nРезультаты:\n${JSON.stringify(resultData, null, 2)}`;
         
-        console.log(`📧 Отправка email через SendGrid на ${toEmail}...`);
-        const response = await sgMail.send(msg);
+        console.log(`📧 Отправка email через Unisender на ${toEmail}...`);
         
-        console.log('✅ Email успешно отправлен через SendGrid!');
-        console.log(`   📬 Получатель: ${toEmail}`);
-        console.log(`   📊 Статус: ${response[0].statusCode}`);
+        const response = await axios.post(UNISENDER_API_URL, null, {
+            params: {
+                api_key: UNISENDER_API_KEY,
+                email: toEmail,
+                sender_name: 'Финансовый калькулятор',
+                sender_email: process.env.EMAIL_FROM,
+                subject: `Результаты расчета - ${title} (${new Date().toLocaleDateString('ru-RU')})`,
+                body: html,
+                list_id: null,
+                from_name: 'Финансовый калькулятор',
+                from_email: process.env.EMAIL_FROM
+            }
+        });
         
-        return { success: true };
+        if (response.data && response.data.result) {
+            console.log('✅ Email успешно отправлен через Unisender!');
+            console.log(`   📬 Получатель: ${toEmail}`);
+            console.log(`   📝 ID: ${response.data.result.email_id}`);
+            return { success: true, messageId: response.data.result.email_id };
+        } else {
+            throw new Error(response.data.error || 'Неизвестная ошибка');
+        }
         
     } catch (error) {
-        console.error('❌ Ошибка SendGrid:', error.response?.body || error.message);
+        console.error('❌ Ошибка Unisender:', error.response?.data || error.message);
         
-        if (error.response?.body?.errors) {
-            const errors = error.response.body.errors;
-            throw new Error(`Ошибка SendGrid: ${errors.map(e => e.message).join(', ')}`);
+        if (error.response?.data?.error) {
+            throw new Error(`Ошибка Unisender: ${error.response.data.error}`);
         } else {
             throw new Error(`Не удалось отправить email: ${error.message}`);
         }
