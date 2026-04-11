@@ -6,6 +6,35 @@ if (process.env.SENDGRID_API_KEY) {
     console.log('📧 SendGrid инициализирован');
 }
 
+<<<<<<< HEAD
+=======
+const getTransporter = () => {
+    if (!transporter) {
+        console.log('📧 Создание Gmail транспорта...');
+        console.log(`   EMAIL_USER: ${process.env.EMAIL_USER ? '✅ установлен' : '❌ не установлен'}`);
+        console.log(`   EMAIL_PASS: ${process.env.EMAIL_PASS ? '✅ установлен (длина: ' + process.env.EMAIL_PASS.length + ')' : '❌ не установлен'}`);
+        
+        transporter = nodemailer.createTransport({
+            service: 'gmail',
+            auth: {
+                user: process.env.EMAIL_USER,
+                pass: process.env.EMAIL_PASS
+            },
+            // Увеличиваем таймауты для диагностики
+            connectionTimeout: 10000,
+            greetingTimeout: 10000,
+            socketTimeout: 10000,
+            debug: true, // Включаем отладку
+            logger: true  // Включаем логирование
+        });
+        
+        // Проверяем конфигурацию
+        console.log('📧 Транспорт создан');
+    }
+    return transporter;
+};
+
+>>>>>>> 2bd6ffc82b3024d6ea67a08509eb8a7f008ed82e
 const formatMoney = (amount) => {
     if (!amount && amount !== 0) return '—';
     return new Intl.NumberFormat('ru-RU', { 
@@ -60,19 +89,13 @@ const generateEmailTemplate = (calculatorType, inputData, resultData) => {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Результаты расчета - ${title}</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
             line-height: 1.6;
             color: #333;
             background-color: #f5f5f5;
         }
-        
         .container {
             max-width: 600px;
             margin: 20px auto;
@@ -81,19 +104,23 @@ const generateEmailTemplate = (calculatorType, inputData, resultData) => {
             overflow: hidden;
             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
         }
-        
         .header {
             background: linear-gradient(135deg, #0047ab 0%, #0066cc 100%);
             color: white;
             padding: 32px 24px;
             text-align: center;
         }
-        
-        .header h1 {
-            margin: 0 0 8px 0;
-            font-size: 28px;
-            font-weight: 700;
+        .header h1 { margin: 0 0 8px 0; font-size: 28px; font-weight: 700; }
+        .header .date { font-size: 14px; opacity: 0.9; margin-top: 8px; }
+        .header .badge {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            margin-top: 12px;
         }
+<<<<<<< HEAD
         
         .header .date {
             font-size: 14px;
@@ -114,13 +141,15 @@ const generateEmailTemplate = (calculatorType, inputData, resultData) => {
             padding: 32px;
         }
         
+=======
+        .content { padding: 32px; }
+>>>>>>> 2bd6ffc82b3024d6ea67a08509eb8a7f008ed82e
         .info-section {
             background: #f8f9fa;
             border-radius: 12px;
             padding: 20px;
             margin-bottom: 24px;
         }
-        
         .info-section h3 {
             margin: 0 0 16px 0;
             color: #0047ab;
@@ -130,7 +159,6 @@ const generateEmailTemplate = (calculatorType, inputData, resultData) => {
             align-items: center;
             gap: 8px;
         }
-        
         .result-item {
             display: flex;
             justify-content: space-between;
@@ -138,11 +166,7 @@ const generateEmailTemplate = (calculatorType, inputData, resultData) => {
             padding: 12px 0;
             border-bottom: 1px solid #e5e7eb;
         }
-        
-        .result-item:last-child {
-            border-bottom: none;
-        }
-        
+        .result-item:last-child { border-bottom: none; }
         .result-item.highlight {
             background: linear-gradient(135deg, #fff5e6 0%, #fff0e0 100%);
             padding: 16px;
@@ -150,23 +174,9 @@ const generateEmailTemplate = (calculatorType, inputData, resultData) => {
             border-radius: 12px;
             border-bottom: none;
         }
-        
-        .result-label {
-            font-weight: 500;
-            color: #6b7280;
-            font-size: 14px;
-        }
-        
-        .result-value {
-            font-weight: 700;
-            color: #0047ab;
-            font-size: 18px;
-        }
-        
-        .result-value.large {
-            font-size: 24px;
-        }
-        
+        .result-label { font-weight: 500; color: #6b7280; font-size: 14px; }
+        .result-value { font-weight: 700; color: #0047ab; font-size: 18px; }
+        .result-value.large { font-size: 24px; }
         .footer {
             background: #f8f9fa;
             padding: 24px;
@@ -175,7 +185,6 @@ const generateEmailTemplate = (calculatorType, inputData, resultData) => {
             color: #9ca3af;
             border-top: 1px solid #e5e7eb;
         }
-        
         .note {
             background: #fef3c7;
             border-left: 4px solid #f59e0b;
@@ -185,36 +194,21 @@ const generateEmailTemplate = (calculatorType, inputData, resultData) => {
             font-size: 13px;
             color: #92400e;
         }
+<<<<<<< HEAD
         
         .note strong {
             font-weight: 600;
         }
         
+=======
+>>>>>>> 2bd6ffc82b3024d6ea67a08509eb8a7f008ed82e
         @media (max-width: 600px) {
-            .container {
-                margin: 10px;
-                border-radius: 12px;
-            }
-            
-            .header {
-                padding: 24px 20px;
-            }
-            
-            .header h1 {
-                font-size: 24px;
-            }
-            
-            .content {
-                padding: 20px;
-            }
-            
-            .result-value {
-                font-size: 16px;
-            }
-            
-            .result-value.large {
-                font-size: 20px;
-            }
+            .container { margin: 10px; border-radius: 12px; }
+            .header { padding: 24px 20px; }
+            .header h1 { font-size: 24px; }
+            .content { padding: 20px; }
+            .result-value { font-size: 16px; }
+            .result-value.large { font-size: 20px; }
         }
     </style>
 </head>
@@ -225,7 +219,6 @@ const generateEmailTemplate = (calculatorType, inputData, resultData) => {
             <div class="date">${currentDate}</div>
             <div class="badge">Результаты финансового расчета</div>
         </div>
-        
         <div class="content">
             <div class="info-section">
                 <h3>📝 Введенные данные</h3>`;
@@ -302,7 +295,6 @@ const generateEmailTemplate = (calculatorType, inputData, resultData) => {
     
     html += `
             </div>
-            
             <div class="info-section">
                 <h3>📈 Результаты расчета</h3>`;
     
@@ -357,18 +349,14 @@ const generateEmailTemplate = (calculatorType, inputData, resultData) => {
     
     html += `
             </div>
-            
             <div class="note">
                 <strong>ℹ️ Важно:</strong> Данный расчет носит ознакомительный характер.<br>
-                Точные условия кредитования уточняйте в отделении банка.<br>
-                Для получения официального предложения обратитесь к специалисту.
+                Точные условия кредитования уточняйте в отделении банка.
             </div>
         </div>
-        
         <div class="footer">
             <p>© ${new Date().getFullYear()} Финансовый калькулятор</p>
             <p>Это автоматическое сообщение, пожалуйста, не отвечайте на него.</p>
-            <p style="margin-top: 8px; font-size: 11px;">Если вы не запрашивали этот расчет, проигнорируйте данное письмо.</p>
         </div>
     </div>
 </body>
@@ -378,21 +366,42 @@ const generateEmailTemplate = (calculatorType, inputData, resultData) => {
 };
 
 const sendCalculationResult = async (toEmail, calculatorType, inputData, resultData) => {
+    console.log('\n🔍 ========== ДИАГНОСТИКА ОТПРАВКИ EMAIL ==========');
+    console.log(`📬 Получатель: ${toEmail}`);
+    console.log(`📧 Тип: ${calculatorType}`);
+    
     try {
-        // Проверяем наличие API ключа
-        if (!process.env.SENDGRID_API_KEY) {
-            console.log('⚠️ SENDGRID_API_KEY не настроен, используем демо-режим');
-            return { 
-                success: true, 
-                demo: true,
-                message: 'Демо-режим: письмо не отправлено, но функционал реализован' 
-            };
+
+        const fromEmail = process.env.EMAIL_USER;
+        const fromPass = process.env.EMAIL_PASS;
+        
+        console.log(`📧 Отправитель: ${fromEmail ? '✅ ' + fromEmail : '❌ не указан'}`);
+        console.log(`🔑 Пароль: ${fromPass ? '✅ установлен (длина: ' + fromPass.length + ')' : '❌ не указан'}`);
+        
+        if (!fromEmail) {
+            throw new Error('EMAIL_USER не настроен');
         }
         
-        if (!process.env.EMAIL_FROM) {
-            throw new Error('EMAIL_FROM не настроен в .env файле');
+        if (!fromPass) {
+            throw new Error('EMAIL_PASS не настроен');
         }
         
+        console.log('📧 Создание транспорта...');
+        const transporter = getTransporter();
+        
+        console.log('📧 Проверка подключения к Gmail...');
+        console.log('   ⏳ Это может занять до 10 секунд...');
+        
+        // Проверяем подключение с таймаутом
+        const verifyPromise = transporter.verify();
+        const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Таймаут подключения 10 секунд')), 10000)
+        );
+        
+        await Promise.race([verifyPromise, timeoutPromise]);
+        console.log('✅ Gmail SMTP подключение проверено');
+        
+
         const title = {
             mortgage: 'Ипотечный калькулятор',
             autocredit: 'Автокредит',
@@ -400,27 +409,13 @@ const sendCalculationResult = async (toEmail, calculatorType, inputData, resultD
             pension: 'Пенсионный калькулятор'
         }[calculatorType] || 'Финансовый калькулятор';
         
+        console.log('📧 Генерация HTML шаблона...');
         const html = generateEmailTemplate(calculatorType, inputData, resultData);
         
-        const textContent = `
-${title} - Результаты расчета
 
-Дата: ${new Date().toLocaleString('ru-RU')}
+        const mailOptions = {
+            from: `"Финансовый калькулятор" <${fromEmail}>`,
 
-Введенные данные:
-${JSON.stringify(inputData, null, 2)}
-
-Результаты:
-${JSON.stringify(resultData, null, 2)}
-
-Важно: Данный расчет носит ознакомительный характер. 
-Точные условия кредитования уточняйте в отделении банка.
-
----
-Это автоматическое сообщение, пожалуйста, не отвечайте на него.
-        `;
-        
-        const msg = {
             to: toEmail,
             from: {
                 email: process.env.EMAIL_FROM,
@@ -428,72 +423,49 @@ ${JSON.stringify(resultData, null, 2)}
             },
             subject: `Результаты расчета - ${title} (${new Date().toLocaleDateString('ru-RU')})`,
             html: html,
-            text: textContent
+
+            text: `Результаты расчета ${title}`
         };
         
-        console.log(`📧 Отправка email через SendGrid на ${toEmail}...`);
-        const response = await sgMail.send(msg);
+        console.log(`📧 Отправка email на ${toEmail}...`);
+        console.log('   ⏳ Ожидание ответа от Gmail...');
         
-        console.log('✅ Email успешно отправлен через SendGrid!');
+        const sendPromise = transporter.sendMail(mailOptions);
+        const sendTimeout = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Таймаут отправки 15 секунд')), 15000)
+        );
+        
+        const info = await Promise.race([sendPromise, sendTimeout]);
+        
+        console.log('✅ Email успешно отправлен через Gmail!');
+        console.log(`   📝 ID: ${info.messageId}`);
         console.log(`   📬 Получатель: ${toEmail}`);
-        console.log(`   📊 Статус: ${response[0].statusCode}`);
+        console.log('🔍 ========== ДИАГНОСТИКА ЗАВЕРШЕНА ==========\n');
         
-        return { 
-            success: true, 
-            to: toEmail,
-            subject: msg.subject,
-            statusCode: response[0].statusCode
-        };
+        return { success: true, messageId: info.messageId };
         
     } catch (error) {
-        console.error('❌ Ошибка отправки email:', error.response?.body || error.message);
+        console.error('❌ ОШИБКА при отправке email:');
+        console.error(`   Сообщение: ${error.message}`);
+        console.error(`   Код ошибки: ${error.code || 'нет'}`);
+        console.error(`   Команда: ${error.command || 'нет'}`);
         
-        if (error.response?.body?.errors) {
-            const errors = error.response.body.errors;
-            throw new Error(`Ошибка SendGrid: ${errors.map(e => e.message).join(', ')}`);
-        } else {
-            throw new Error(`Не удалось отправить email: ${error.message}`);
+        // Дополнительная диагностика
+        if (error.message.includes('ECONNREFUSED')) {
+            console.error('   💡 Причина: Сервер Gmail недоступен. Проверьте интернет-соединение.');
+        } else if (error.message.includes('ETIMEDOUT')) {
+            console.error('   💡 Причина: Таймаут подключения. Возможно, порты 465/587 заблокированы хостингом.');
+        } else if (error.message.includes('535')) {
+            console.error('   💡 Причина: Неверный пароль приложения Gmail.');
+        } else if (error.message.includes('Invalid login')) {
+            console.error('   💡 Причина: Неверный логин или пароль.');
+
         }
+        
+        console.error('🔍 ========== ДИАГНОСТИКА ЗАВЕРШЕНА ==========\n');
+        throw new Error(`Не удалось отправить email: ${error.message}`);
     }
 };
 
-const testEmailConfig = async (testEmail = null) => {
-    const targetEmail = testEmail || process.env.EMAIL_FROM;
-    
-    if (!targetEmail) {
-        throw new Error('Не указан email для тестирования');
-    }
-    
-    const testData = {
-        calculatorType: 'mortgage',
-        inputData: {
-            propertyPrice: 2000000,
-            downPayment: 500000,
-            years: 20
-        },
-        resultData: {
-            monthlyPayment: 14080,
-            loanAmount: 1500000,
-            totalPayment: 3379200,
-            overpayment: 1879200,
-            requiredIncome: 35200
-        }
-    };
-    
-    console.log('🔍 Тестирование SendGrid...');
-    console.log(`📧 Отправка тестового письма на ${targetEmail}`);
-    
-    return await sendCalculationResult(
-        targetEmail,
-        testData.calculatorType,
-        testData.inputData,
-        testData.resultData
-    );
-};
 
-module.exports = { 
-    sendCalculationResult,
-    testEmailConfig,
-    formatMoney,
-    generateEmailTemplate
-};
+module.exports = { sendCalculationResult, formatMoney, generateEmailTemplate };

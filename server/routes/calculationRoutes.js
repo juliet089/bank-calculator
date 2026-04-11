@@ -89,7 +89,7 @@ router.post('/', async (req, res) => {
     }
 });
 
-// Маршрут для отправки результата на email
+// Маршрут для отправки результата на email (асинхронный)
 router.post('/send-email', async (req, res) => {
     try {
         const { email, calculatorType, inputData, resultData } = req.body;
@@ -101,6 +101,8 @@ router.post('/send-email', async (req, res) => {
                 success: false, 
                 message: 'Email не указан' 
             });
+
+
         }
         
         // Валидация email
@@ -111,15 +113,34 @@ router.post('/send-email', async (req, res) => {
                 message: 'Неверный формат email' 
             });
         }
+
         
+        // Сразу отвечаем пользователю (не ждем отправки письма)
+        res.json({ 
+            success: true, 
+
+
+            message: 'Результаты отправляются на почту. Письмо придет в течение минуты.'
+
+        });
+        
+        // Отправляем email в фоновом режиме
         const { sendCalculationResult } = require('../utils/emailService');
         
-        // Отправляем email
-        const result = await sendCalculationResult(email, calculatorType, inputData, resultData);
+        sendCalculationResult(email, calculatorType, inputData, resultData)
+            .then((result) => {
+                console.log(`✅ Email успешно отправлен на ${email}`);
+                if (result.messageId) {
+                    console.log(`   📝 ID: ${result.messageId}`);
+                }
+            })
+            .catch((error) => {
+                console.error(`❌ Ошибка отправки email на ${email}:`, error.message);
+            });
         
-        // Обновляем запись в БД, добавляя email
+        // Обновляем запись в БД, добавляя email (в фоне)
         const userIp = req.ip || req.connection.remoteAddress;
-        await Calculation.findOneAndUpdate(
+        Calculation.findOneAndUpdate(
             { 
                 userIp: userIp, 
                 calculatorType: calculatorType,
@@ -127,22 +148,18 @@ router.post('/send-email', async (req, res) => {
             },
             { $set: { userEmail: email } },
             { sort: { createdAt: -1 } }
-        );
-        
-        res.json({ 
-            success: true, 
-            message: result.demo 
-                ? 'Функция отправки email реализована. Для реальной отправки настройте SendGrid.'
-                : 'Результаты успешно отправлены на указанный email',
-            demo: result.demo || false
-        });
+        ).catch(err => console.error('Ошибка обновления БД:', err));
         
     } catch (error) {
-        console.error('❌ Ошибка отправки email:', error);
-        res.status(500).json({ 
-            success: false, 
-            message: error.message || 'Не удалось отправить результаты на email' 
-        });
+
+        console.error('❌ Ошибка:', error);
+        if (!res.headersSent) {
+            res.status(500).json({ 
+                success: false, 
+                message: error.message || 'Не удалось отправить результаты на email' 
+            });
+        }
+
     }
 });
 
