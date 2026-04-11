@@ -1,21 +1,25 @@
 const nodemailer = require('nodemailer');
 
+// Создаем один экземпляр транспорта (переиспользуем)
 let transporter = null;
 
 const getTransporter = () => {
     if (!transporter) {
-        console.log('📧 Используется Gmail SMTP');
         transporter = nodemailer.createTransport({
             service: 'gmail',
             auth: {
                 user: process.env.EMAIL_USER,
                 pass: process.env.EMAIL_PASS
-            }
+            },
+            pool: true,
+            maxConnections: 5,
+            maxMessages: 100
         });
     }
     return transporter;
 };
 
+// Форматирование денежной суммы
 const formatMoney = (amount) => {
     if (!amount && amount !== 0) return '—';
     return new Intl.NumberFormat('ru-RU', { 
@@ -26,16 +30,7 @@ const formatMoney = (amount) => {
     }).format(amount);
 };
 
-const formatDate = () => {
-    return new Date().toLocaleDateString('ru-RU', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-    });
-};
-
+// Генерация HTML шаблона для email
 const generateEmailTemplate = (calculatorType, inputData, resultData) => {
     const typeNames = {
         mortgage: 'Ипотечный калькулятор',
@@ -51,17 +46,15 @@ const generateEmailTemplate = (calculatorType, inputData, resultData) => {
         pension: '💰'
     };
     
-    const typeRates = {
-        mortgage: 9.6,
-        autocredit: 3.5,
-        consumer: 14.5,
-        pension: 7.0
-    };
-    
     const title = typeNames[calculatorType] || 'Финансовый калькулятор';
     const icon = typeIcons[calculatorType] || '📊';
-    const rate = typeRates[calculatorType] || 0;
-    const currentDate = formatDate();
+    const currentDate = new Date().toLocaleDateString('ru-RU', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
     
     let html = `<!DOCTYPE html>
 <html lang="ru">
@@ -72,7 +65,7 @@ const generateEmailTemplate = (calculatorType, inputData, resultData) => {
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
             line-height: 1.6;
             color: #333;
             background-color: #f5f5f5;
@@ -91,17 +84,19 @@ const generateEmailTemplate = (calculatorType, inputData, resultData) => {
             padding: 32px 24px;
             text-align: center;
         }
-        .header h1 { margin: 0 0 8px 0; font-size: 28px; font-weight: 700; }
-        .header .date { font-size: 14px; opacity: 0.9; margin-top: 8px; }
-        .header .badge {
-            display: inline-block;
-            background: rgba(255, 255, 255, 0.2);
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            margin-top: 12px;
+        .header h1 {
+            margin: 0 0 8px 0;
+            font-size: 28px;
+            font-weight: 700;
         }
-        .content { padding: 32px; }
+        .header .date {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-top: 8px;
+        }
+        .content {
+            padding: 32px;
+        }
         .info-section {
             background: #f8f9fa;
             border-radius: 12px;
@@ -124,7 +119,9 @@ const generateEmailTemplate = (calculatorType, inputData, resultData) => {
             padding: 12px 0;
             border-bottom: 1px solid #e5e7eb;
         }
-        .result-item:last-child { border-bottom: none; }
+        .result-item:last-child {
+            border-bottom: none;
+        }
         .result-item.highlight {
             background: linear-gradient(135deg, #fff5e6 0%, #fff0e0 100%);
             padding: 16px;
@@ -132,9 +129,19 @@ const generateEmailTemplate = (calculatorType, inputData, resultData) => {
             border-radius: 12px;
             border-bottom: none;
         }
-        .result-label { font-weight: 500; color: #6b7280; font-size: 14px; }
-        .result-value { font-weight: 700; color: #0047ab; font-size: 18px; }
-        .result-value.large { font-size: 24px; }
+        .result-label {
+            font-weight: 500;
+            color: #6b7280;
+            font-size: 14px;
+        }
+        .result-value {
+            font-weight: 700;
+            color: #0047ab;
+            font-size: 18px;
+        }
+        .result-value.large {
+            font-size: 24px;
+        }
         .footer {
             background: #f8f9fa;
             padding: 24px;
@@ -151,6 +158,14 @@ const generateEmailTemplate = (calculatorType, inputData, resultData) => {
             border-radius: 8px;
             font-size: 13px;
             color: #92400e;
+        }
+        .badge {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            margin-top: 12px;
         }
         @media (max-width: 600px) {
             .container { margin: 10px; border-radius: 12px; }
@@ -169,10 +184,12 @@ const generateEmailTemplate = (calculatorType, inputData, resultData) => {
             <div class="date">${currentDate}</div>
             <div class="badge">Результаты финансового расчета</div>
         </div>
+        
         <div class="content">
             <div class="info-section">
                 <h3>📝 Введенные данные</h3>`;
     
+    // Добавляем введенные данные в зависимости от типа
     if (calculatorType === 'mortgage') {
         html += `
                 <div class="result-item">
@@ -186,15 +203,11 @@ const generateEmailTemplate = (calculatorType, inputData, resultData) => {
                 <div class="result-item">
                     <span class="result-label">Срок кредита:</span>
                     <span class="result-value">${inputData.years} лет (${inputData.years * 12} месяцев)</span>
-                </div>`;
-        if (inputData.propertyPrice && inputData.downPayment) {
-            const loanAmount = inputData.propertyPrice - inputData.downPayment;
-            html += `
+                </div>
                 <div class="result-item">
                     <span class="result-label">Сумма кредита:</span>
-                    <span class="result-value">${formatMoney(loanAmount)}</span>
+                    <span class="result-value">${formatMoney(inputData.propertyPrice - inputData.downPayment)}</span>
                 </div>`;
-        }
     } else if (calculatorType === 'autocredit') {
         html += `
                 <div class="result-item">
@@ -208,15 +221,11 @@ const generateEmailTemplate = (calculatorType, inputData, resultData) => {
                 <div class="result-item">
                     <span class="result-label">Срок кредита:</span>
                     <span class="result-value">${inputData.years} лет (${inputData.years * 12} месяцев)</span>
-                </div>`;
-        if (inputData.carPrice && inputData.downPayment) {
-            const loanAmount = inputData.carPrice - inputData.downPayment;
-            html += `
+                </div>
                 <div class="result-item">
                     <span class="result-label">Сумма кредита:</span>
-                    <span class="result-value">${formatMoney(loanAmount)}</span>
+                    <span class="result-value">${formatMoney(inputData.carPrice - inputData.downPayment)}</span>
                 </div>`;
-        }
     } else if (calculatorType === 'consumer') {
         html += `
                 <div class="result-item">
@@ -240,15 +249,24 @@ const generateEmailTemplate = (calculatorType, inputData, resultData) => {
                 <div class="result-item">
                     <span class="result-label">Срок накопления:</span>
                     <span class="result-value">${inputData.years} лет (${inputData.years * 12} месяцев)</span>
+                </div>
+                <div class="result-item">
+                    <span class="result-label">Прогнозируемая доходность:</span>
+                    <span class="result-value">7% годовых</span>
                 </div>`;
     }
     
     html += `
             </div>
+            
             <div class="info-section">
                 <h3>📈 Результаты расчета</h3>`;
     
+    // Добавляем результаты в зависимости от типа
     if (calculatorType !== 'pension') {
+        const rates = { mortgage: 9.6, autocredit: 3.5, consumer: 14.5 };
+        const rate = rates[calculatorType] || 0;
+        
         html += `
                 <div class="result-item highlight">
                     <span class="result-label">Ежемесячный платеж:</span>
@@ -270,14 +288,8 @@ const generateEmailTemplate = (calculatorType, inputData, resultData) => {
                     <span class="result-label">Рекомендуемый доход:</span>
                     <span class="result-value">${formatMoney(resultData.requiredIncome)}</span>
                 </div>`;
-        if (resultData.loanAmount) {
-            html += `
-                <div class="result-item">
-                    <span class="result-label">Сумма кредита:</span>
-                    <span class="result-value">${formatMoney(resultData.loanAmount)}</span>
-                </div>`;
-        }
     } else {
+        // ПЕНСИОННЫЙ КАЛЬКУЛЯТОР - специальное отображение
         html += `
                 <div class="result-item highlight">
                     <span class="result-label">Накопления через ${inputData.years} лет:</span>
@@ -293,17 +305,23 @@ const generateEmailTemplate = (calculatorType, inputData, resultData) => {
                 </div>
                 <div class="result-item">
                     <span class="result-label">Доходность инвестиций:</span>
-                    <span class="result-value">${rate}% годовых</span>
+                    <span class="result-value">7% годовых</span>
+                </div>
+                <div class="result-item">
+                    <span class="result-label">Эффективность:</span>
+                    <span class="result-value">${Math.round((resultData.profit / resultData.totalContributions) * 100)}% к взносам</span>
                 </div>`;
     }
     
     html += `
             </div>
+            
             <div class="note">
                 <strong>ℹ️ Важно:</strong> Данный расчет носит ознакомительный характер.<br>
                 Точные условия кредитования уточняйте в отделении банка.
             </div>
         </div>
+        
         <div class="footer">
             <p>© ${new Date().getFullYear()} Финансовый калькулятор</p>
             <p>Это автоматическое сообщение, пожалуйста, не отвечайте на него.</p>
@@ -315,23 +333,17 @@ const generateEmailTemplate = (calculatorType, inputData, resultData) => {
     return html;
 };
 
+// Основная функция отправки email
 const sendCalculationResult = async (toEmail, calculatorType, inputData, resultData) => {
     try {
-        const fromEmail = process.env.EMAIL_USER;
-        
-        if (!fromEmail) {
-            throw new Error('EMAIL_USER не настроен');
-        }
-        
-        if (!process.env.EMAIL_PASS) {
-            throw new Error('EMAIL_PASS не настроен');
-        }
-        
         const transporter = getTransporter();
         
-        // Проверяем подключение
-        await transporter.verify();
-        console.log('✅ Gmail SMTP подключение проверено');
+        // Проверяем наличие данных для пенсионного калькулятора
+        if (calculatorType === 'pension') {
+            console.log('💰 Отправка пенсионного расчета...');
+            console.log('   Накопления:', resultData.totalSavings);
+            console.log('   Доход:', resultData.profit);
+        }
         
         const title = {
             mortgage: 'Ипотечный калькулятор',
@@ -342,21 +354,39 @@ const sendCalculationResult = async (toEmail, calculatorType, inputData, resultD
         
         const html = generateEmailTemplate(calculatorType, inputData, resultData);
         
+        // Простой текст для email-клиентов без HTML
+        let textContent = `${title} - Результаты расчета\n\n`;
+        textContent += `Дата: ${new Date().toLocaleString('ru-RU')}\n\n`;
+        textContent += `Введенные данные:\n${JSON.stringify(inputData, null, 2)}\n\n`;
+        textContent += `Результаты:\n${JSON.stringify(resultData, null, 2)}\n\n`;
+        textContent += `Важно: Данный расчет носит ознакомительный характер.`;
+        
         const mailOptions = {
-            from: `"Финансовый калькулятор" <${fromEmail}>`,
+            from: `"Финансовый калькулятор" <${process.env.EMAIL_USER}>`,
             to: toEmail,
             subject: `Результаты расчета - ${title} (${new Date().toLocaleDateString('ru-RU')})`,
             html: html,
-            text: `Результаты расчета ${title}`
+            text: textContent,
+            headers: {
+                'X-Priority': '3',
+                'X-MSMail-Priority': 'Normal',
+                'X-Mailer': 'Financial Calculator v1.0'
+            }
         };
         
-        console.log(`📧 Отправка email через Gmail на ${toEmail}...`);
+        console.log(`📧 Отправка email на ${toEmail}...`);
         const info = await transporter.sendMail(mailOptions);
         
-        console.log('✅ Email успешно отправлен через Gmail!');
+        console.log('✅ Email успешно отправлен!');
         console.log(`   📝 ID: ${info.messageId}`);
+        console.log(`   📬 Получатель: ${toEmail}`);
         
-        return { success: true, messageId: info.messageId };
+        return { 
+            success: true, 
+            messageId: info.messageId,
+            to: toEmail,
+            subject: mailOptions.subject
+        };
         
     } catch (error) {
         console.error('❌ Ошибка отправки email:', error.message);
@@ -364,4 +394,4 @@ const sendCalculationResult = async (toEmail, calculatorType, inputData, resultD
     }
 };
 
-module.exports = { sendCalculationResult, formatMoney, generateEmailTemplate };
+module.exports = { sendCalculationResult, formatMoney };
