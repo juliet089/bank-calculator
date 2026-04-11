@@ -6,35 +6,6 @@ if (process.env.SENDGRID_API_KEY) {
     console.log('📧 SendGrid инициализирован');
 }
 
-<<<<<<< HEAD
-=======
-const getTransporter = () => {
-    if (!transporter) {
-        console.log('📧 Создание Gmail транспорта...');
-        console.log(`   EMAIL_USER: ${process.env.EMAIL_USER ? '✅ установлен' : '❌ не установлен'}`);
-        console.log(`   EMAIL_PASS: ${process.env.EMAIL_PASS ? '✅ установлен (длина: ' + process.env.EMAIL_PASS.length + ')' : '❌ не установлен'}`);
-        
-        transporter = nodemailer.createTransport({
-            service: 'gmail',
-            auth: {
-                user: process.env.EMAIL_USER,
-                pass: process.env.EMAIL_PASS
-            },
-            // Увеличиваем таймауты для диагностики
-            connectionTimeout: 10000,
-            greetingTimeout: 10000,
-            socketTimeout: 10000,
-            debug: true, // Включаем отладку
-            logger: true  // Включаем логирование
-        });
-        
-        // Проверяем конфигурацию
-        console.log('📧 Транспорт создан');
-    }
-    return transporter;
-};
-
->>>>>>> 2bd6ffc82b3024d6ea67a08509eb8a7f008ed82e
 const formatMoney = (amount) => {
     if (!amount && amount !== 0) return '—';
     return new Intl.NumberFormat('ru-RU', { 
@@ -120,30 +91,7 @@ const generateEmailTemplate = (calculatorType, inputData, resultData) => {
             font-size: 12px;
             margin-top: 12px;
         }
-<<<<<<< HEAD
-        
-        .header .date {
-            font-size: 14px;
-            opacity: 0.9;
-            margin-top: 8px;
-        }
-        
-        .header .badge {
-            display: inline-block;
-            background: rgba(255, 255, 255, 0.2);
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            margin-top: 12px;
-        }
-        
-        .content {
-            padding: 32px;
-        }
-        
-=======
         .content { padding: 32px; }
->>>>>>> 2bd6ffc82b3024d6ea67a08509eb8a7f008ed82e
         .info-section {
             background: #f8f9fa;
             border-radius: 12px;
@@ -194,14 +142,6 @@ const generateEmailTemplate = (calculatorType, inputData, resultData) => {
             font-size: 13px;
             color: #92400e;
         }
-<<<<<<< HEAD
-        
-        .note strong {
-            font-weight: 600;
-        }
-        
-=======
->>>>>>> 2bd6ffc82b3024d6ea67a08509eb8a7f008ed82e
         @media (max-width: 600px) {
             .container { margin: 10px; border-radius: 12px; }
             .header { padding: 24px 20px; }
@@ -366,42 +306,15 @@ const generateEmailTemplate = (calculatorType, inputData, resultData) => {
 };
 
 const sendCalculationResult = async (toEmail, calculatorType, inputData, resultData) => {
-    console.log('\n🔍 ========== ДИАГНОСТИКА ОТПРАВКИ EMAIL ==========');
-    console.log(`📬 Получатель: ${toEmail}`);
-    console.log(`📧 Тип: ${calculatorType}`);
-    
     try {
-
-        const fromEmail = process.env.EMAIL_USER;
-        const fromPass = process.env.EMAIL_PASS;
-        
-        console.log(`📧 Отправитель: ${fromEmail ? '✅ ' + fromEmail : '❌ не указан'}`);
-        console.log(`🔑 Пароль: ${fromPass ? '✅ установлен (длина: ' + fromPass.length + ')' : '❌ не указан'}`);
-        
-        if (!fromEmail) {
-            throw new Error('EMAIL_USER не настроен');
+        if (!process.env.SENDGRID_API_KEY) {
+            throw new Error('SENDGRID_API_KEY не настроен');
         }
         
-        if (!fromPass) {
-            throw new Error('EMAIL_PASS не настроен');
+        if (!process.env.EMAIL_FROM) {
+            throw new Error('EMAIL_FROM не настроен');
         }
         
-        console.log('📧 Создание транспорта...');
-        const transporter = getTransporter();
-        
-        console.log('📧 Проверка подключения к Gmail...');
-        console.log('   ⏳ Это может занять до 10 секунд...');
-        
-        // Проверяем подключение с таймаутом
-        const verifyPromise = transporter.verify();
-        const timeoutPromise = new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Таймаут подключения 10 секунд')), 10000)
-        );
-        
-        await Promise.race([verifyPromise, timeoutPromise]);
-        console.log('✅ Gmail SMTP подключение проверено');
-        
-
         const title = {
             mortgage: 'Ипотечный калькулятор',
             autocredit: 'Автокредит',
@@ -409,63 +322,35 @@ const sendCalculationResult = async (toEmail, calculatorType, inputData, resultD
             pension: 'Пенсионный калькулятор'
         }[calculatorType] || 'Финансовый калькулятор';
         
-        console.log('📧 Генерация HTML шаблона...');
         const html = generateEmailTemplate(calculatorType, inputData, resultData);
         
-
-        const mailOptions = {
-            from: `"Финансовый калькулятор" <${fromEmail}>`,
-
+        const msg = {
             to: toEmail,
-            from: {
-                email: process.env.EMAIL_FROM,
-                name: process.env.EMAIL_FROM_NAME || 'Финансовый калькулятор'
-            },
+            from: process.env.EMAIL_FROM,
             subject: `Результаты расчета - ${title} (${new Date().toLocaleDateString('ru-RU')})`,
             html: html,
-
             text: `Результаты расчета ${title}`
         };
         
-        console.log(`📧 Отправка email на ${toEmail}...`);
-        console.log('   ⏳ Ожидание ответа от Gmail...');
+        console.log(`📧 Отправка email через SendGrid на ${toEmail}...`);
+        const response = await sgMail.send(msg);
         
-        const sendPromise = transporter.sendMail(mailOptions);
-        const sendTimeout = new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Таймаут отправки 15 секунд')), 15000)
-        );
-        
-        const info = await Promise.race([sendPromise, sendTimeout]);
-        
-        console.log('✅ Email успешно отправлен через Gmail!');
-        console.log(`   📝 ID: ${info.messageId}`);
+        console.log('✅ Email успешно отправлен через SendGrid!');
         console.log(`   📬 Получатель: ${toEmail}`);
-        console.log('🔍 ========== ДИАГНОСТИКА ЗАВЕРШЕНА ==========\n');
+        console.log(`   📊 Статус: ${response[0].statusCode}`);
         
-        return { success: true, messageId: info.messageId };
+        return { success: true };
         
     } catch (error) {
-        console.error('❌ ОШИБКА при отправке email:');
-        console.error(`   Сообщение: ${error.message}`);
-        console.error(`   Код ошибки: ${error.code || 'нет'}`);
-        console.error(`   Команда: ${error.command || 'нет'}`);
+        console.error('❌ Ошибка SendGrid:', error.response?.body || error.message);
         
-        // Дополнительная диагностика
-        if (error.message.includes('ECONNREFUSED')) {
-            console.error('   💡 Причина: Сервер Gmail недоступен. Проверьте интернет-соединение.');
-        } else if (error.message.includes('ETIMEDOUT')) {
-            console.error('   💡 Причина: Таймаут подключения. Возможно, порты 465/587 заблокированы хостингом.');
-        } else if (error.message.includes('535')) {
-            console.error('   💡 Причина: Неверный пароль приложения Gmail.');
-        } else if (error.message.includes('Invalid login')) {
-            console.error('   💡 Причина: Неверный логин или пароль.');
-
+        if (error.response?.body?.errors) {
+            const errors = error.response.body.errors;
+            throw new Error(`Ошибка SendGrid: ${errors.map(e => e.message).join(', ')}`);
+        } else {
+            throw new Error(`Не удалось отправить email: ${error.message}`);
         }
-        
-        console.error('🔍 ========== ДИАГНОСТИКА ЗАВЕРШЕНА ==========\n');
-        throw new Error(`Не удалось отправить email: ${error.message}`);
     }
 };
-
 
 module.exports = { sendCalculationResult, formatMoney, generateEmailTemplate };
