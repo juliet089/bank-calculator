@@ -1,12 +1,11 @@
-const nodemailer = require('nodemailer');
+const sgMail = require('@sendgrid/mail');
 
-let transporter = null;
+// Настройка SendGrid
+if (process.env.SENDGRID_API_KEY) {
+    sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+    console.log('📧 SendGrid инициализирован');
+}
 
-/**
- * Форматирует число в денежный формат
- * @param {number} amount - Сумма для форматирования
- * @returns {string} Отформатированная сумма
- */
 const formatMoney = (amount) => {
     if (!amount && amount !== 0) return '—';
     return new Intl.NumberFormat('ru-RU', { 
@@ -17,10 +16,6 @@ const formatMoney = (amount) => {
     }).format(amount);
 };
 
-/**
- * Форматирует дату для отображения в письме
- * @returns {string} Отформатированная дата
- */
 const formatDate = () => {
     return new Date().toLocaleDateString('ru-RU', {
         year: 'numeric',
@@ -31,13 +26,6 @@ const formatDate = () => {
     });
 };
 
-/**
- * Генерирует HTML шаблон для письма
- * @param {string} calculatorType - Тип калькулятора
- * @param {object} inputData - Введенные пользователем данные
- * @param {object} resultData - Результаты расчета
- * @returns {string} HTML код письма
- */
 const generateEmailTemplate = (calculatorType, inputData, resultData) => {
     const typeNames = {
         mortgage: 'Ипотечный калькулятор',
@@ -65,7 +53,6 @@ const generateEmailTemplate = (calculatorType, inputData, resultData) => {
     const rate = typeRates[calculatorType] || 0;
     const currentDate = formatDate();
     
-    // Формируем HTML
     let html = `<!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -112,6 +99,15 @@ const generateEmailTemplate = (calculatorType, inputData, resultData) => {
             font-size: 14px;
             opacity: 0.9;
             margin-top: 8px;
+        }
+        
+        .header .badge {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            margin-top: 12px;
         }
         
         .content {
@@ -194,15 +190,6 @@ const generateEmailTemplate = (calculatorType, inputData, resultData) => {
             font-weight: 600;
         }
         
-        .badge {
-            display: inline-block;
-            background: rgba(255, 255, 255, 0.2);
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            margin-top: 12px;
-        }
-        
         @media (max-width: 600px) {
             .container {
                 margin: 10px;
@@ -243,7 +230,6 @@ const generateEmailTemplate = (calculatorType, inputData, resultData) => {
             <div class="info-section">
                 <h3>📝 Введенные данные</h3>`;
     
-    // Добавляем введенные данные в зависимости от типа
     if (calculatorType === 'mortgage') {
         html += `
                 <div class="result-item">
@@ -320,7 +306,6 @@ const generateEmailTemplate = (calculatorType, inputData, resultData) => {
             <div class="info-section">
                 <h3>📈 Результаты расчета</h3>`;
     
-    // Добавляем результаты в зависимости от типа
     if (calculatorType !== 'pension') {
         html += `
                 <div class="result-item highlight">
@@ -392,144 +377,21 @@ const generateEmailTemplate = (calculatorType, inputData, resultData) => {
     return html;
 };
 
-/**
- * Создает и возвращает настроенный транспорт nodemailer
- */
-const getTransporter = () => {
-    if (!transporter) {
-        const emailUser = process.env.EMAIL_USER;
-        const emailDomain = emailUser ? emailUser.split('@')[1] : '';
-        
-        let config = {};
-        
-        // Настройки для Яндекс
-        if (emailDomain === 'yandex.ru' || emailDomain === 'yandex.ua' || emailDomain === 'yandex.kz') {
-            console.log('📧 Используется Яндекс SMTP');
-            config = {
-                host: process.env.EMAIL_HOST || 'smtp.yandex.ru',
-                port: parseInt(process.env.EMAIL_PORT) || 465,
-                secure: process.env.EMAIL_SECURE === 'true' || true,
-                auth: {
-                    user: process.env.EMAIL_USER,
-                    pass: process.env.EMAIL_PASS
-                },
-                tls: {
-                    rejectUnauthorized: false
-                },
-                connectionTimeout: 30000,
-                greetingTimeout: 30000,
-                socketTimeout: 30000
-            };
-        } 
-        // Настройки для Gmail
-        else if (emailDomain === 'gmail.com') {
-            console.log('📧 Используется Gmail SMTP');
-            config = {
-                service: 'gmail',
-                auth: {
-                    user: process.env.EMAIL_USER,
-                    pass: process.env.EMAIL_PASS
-                },
-                connectionTimeout: 30000,
-                greetingTimeout: 30000,
-                socketTimeout: 30000
-            };
-        } 
-        // Настройки для Mail.ru
-        else if (emailDomain === 'mail.ru' || emailDomain === 'bk.ru' || emailDomain === 'inbox.ru' || emailDomain === 'list.ru') {
-            console.log('📧 Используется Mail.ru SMTP');
-            config = {
-                host: process.env.EMAIL_HOST || 'smtp.mail.ru',
-                port: parseInt(process.env.EMAIL_PORT) || 465,
-                secure: process.env.EMAIL_SECURE === 'true' || true,
-                auth: {
-                    user: process.env.EMAIL_USER,
-                    pass: process.env.EMAIL_PASS
-                },
-                tls: {
-                    rejectUnauthorized: false
-                },
-                connectionTimeout: 30000,
-                greetingTimeout: 30000,
-                socketTimeout: 30000
-            };
-        }
-        // Настройки для Outlook/Hotmail
-        else if (emailDomain === 'outlook.com' || emailDomain === 'hotmail.com' || emailDomain === 'live.com') {
-            console.log('📧 Используется Outlook SMTP');
-            config = {
-                host: process.env.EMAIL_HOST || 'smtp-mail.outlook.com',
-                port: parseInt(process.env.EMAIL_PORT) || 587,
-                secure: process.env.EMAIL_SECURE === 'true' || false,
-                auth: {
-                    user: process.env.EMAIL_USER,
-                    pass: process.env.EMAIL_PASS
-                },
-                tls: {
-                    rejectUnauthorized: false,
-                    ciphers: 'SSLv3'
-                },
-                connectionTimeout: 30000,
-                greetingTimeout: 30000,
-                socketTimeout: 30000
-            };
-        }
-        // Кастомные настройки или другие почтовые сервисы
-        else {
-            console.log('📧 Используется кастомный SMTP');
-            config = {
-                host: process.env.EMAIL_HOST || 'smtp.yandex.ru',
-                port: parseInt(process.env.EMAIL_PORT) || 465,
-                secure: process.env.EMAIL_SECURE === 'true' || true,
-                auth: {
-                    user: process.env.EMAIL_USER,
-                    pass: process.env.EMAIL_PASS
-                },
-                tls: {
-                    rejectUnauthorized: false
-                },
-                connectionTimeout: 30000,
-                greetingTimeout: 30000,
-                socketTimeout: 30000
-            };
-        }
-        
-        console.log('🔧 SMTP конфигурация:', {
-            host: config.host || config.service,
-            port: config.port || 'auto',
-            secure: config.secure || false,
-            user: config.auth?.user
-        });
-        
-        transporter = nodemailer.createTransport(config);
-    }
-    return transporter;
-};
-
-/**
- * Основная функция отправки email с результатами расчета
- * @param {string} toEmail - Email получателя
- * @param {string} calculatorType - Тип калькулятора
- * @param {object} inputData - Введенные пользователем данные
- * @param {object} resultData - Результаты расчета
- * @returns {Promise<object>} Результат отправки
- */
 const sendCalculationResult = async (toEmail, calculatorType, inputData, resultData) => {
     try {
-        // Проверяем наличие email отправителя
-        if (!process.env.EMAIL_USER) {
-            throw new Error('EMAIL_USER не настроен в .env файле');
+        // Проверяем наличие API ключа
+        if (!process.env.SENDGRID_API_KEY) {
+            console.log('⚠️ SENDGRID_API_KEY не настроен, используем демо-режим');
+            return { 
+                success: true, 
+                demo: true,
+                message: 'Демо-режим: письмо не отправлено, но функционал реализован' 
+            };
         }
         
-        if (!process.env.EMAIL_PASS) {
-            throw new Error('EMAIL_PASS не настроен в .env файле');
+        if (!process.env.EMAIL_FROM) {
+            throw new Error('EMAIL_FROM не настроен в .env файле');
         }
-        
-        const transporter = getTransporter();
-        
-        // Проверяем подключение к SMTP серверу
-        await transporter.verify();
-        console.log('✅ SMTP подключение проверено');
         
         const title = {
             mortgage: 'Ипотечный калькулятор',
@@ -540,7 +402,6 @@ const sendCalculationResult = async (toEmail, calculatorType, inputData, resultD
         
         const html = generateEmailTemplate(calculatorType, inputData, resultData);
         
-        // Простой текст для email-клиентов, не поддерживающих HTML
         const textContent = `
 ${title} - Результаты расчета
 
@@ -559,56 +420,45 @@ ${JSON.stringify(resultData, null, 2)}
 Это автоматическое сообщение, пожалуйста, не отвечайте на него.
         `;
         
-        const mailOptions = {
-            from: `"Финансовый калькулятор" <${process.env.EMAIL_USER}>`,
+        const msg = {
             to: toEmail,
+            from: {
+                email: process.env.EMAIL_FROM,
+                name: process.env.EMAIL_FROM_NAME || 'Финансовый калькулятор'
+            },
             subject: `Результаты расчета - ${title} (${new Date().toLocaleDateString('ru-RU')})`,
             html: html,
-            text: textContent,
-            headers: {
-                'X-Priority': '3',
-                'X-MSMail-Priority': 'Normal',
-                'X-Mailer': 'Financial Calculator v1.0'
-            }
+            text: textContent
         };
         
-        console.log(`📧 Отправка email на ${toEmail}...`);
-        const info = await transporter.sendMail(mailOptions);
+        console.log(`📧 Отправка email через SendGrid на ${toEmail}...`);
+        const response = await sgMail.send(msg);
         
-        console.log('✅ Email успешно отправлен!');
-        console.log(`   📝 ID: ${info.messageId}`);
+        console.log('✅ Email успешно отправлен через SendGrid!');
         console.log(`   📬 Получатель: ${toEmail}`);
+        console.log(`   📊 Статус: ${response[0].statusCode}`);
         
         return { 
             success: true, 
-            messageId: info.messageId,
             to: toEmail,
-            subject: mailOptions.subject
+            subject: msg.subject,
+            statusCode: response[0].statusCode
         };
         
     } catch (error) {
-        console.error('❌ Ошибка отправки email:', error.message);
+        console.error('❌ Ошибка отправки email:', error.response?.body || error.message);
         
-        // Детальная диагностика ошибок
-        if (error.message.includes('Invalid login') || error.message.includes('535')) {
-            throw new Error('Ошибка аутентификации. Проверьте EMAIL_USER и EMAIL_PASS в .env');
-        } else if (error.message.includes('ECONNREFUSED') || error.message.includes('ETIMEDOUT')) {
-            throw new Error('Не удалось подключиться к SMTP серверу. Проверьте интернет-соединение и настройки портов.');
-        } else if (error.message.includes('550')) {
-            throw new Error('Email получателя отклонен. Проверьте правильность адреса.');
+        if (error.response?.body?.errors) {
+            const errors = error.response.body.errors;
+            throw new Error(`Ошибка SendGrid: ${errors.map(e => e.message).join(', ')}`);
         } else {
             throw new Error(`Не удалось отправить email: ${error.message}`);
         }
     }
 };
 
-/**
- * Тестовая функция для проверки настроек email
- * @param {string} testEmail - Email для тестовой отправки
- * @returns {Promise<object>} Результат теста
- */
 const testEmailConfig = async (testEmail = null) => {
-    const targetEmail = testEmail || process.env.EMAIL_USER;
+    const targetEmail = testEmail || process.env.EMAIL_FROM;
     
     if (!targetEmail) {
         throw new Error('Не указан email для тестирования');
@@ -630,7 +480,7 @@ const testEmailConfig = async (testEmail = null) => {
         }
     };
     
-    console.log('🔍 Тестирование email конфигурации...');
+    console.log('🔍 Тестирование SendGrid...');
     console.log(`📧 Отправка тестового письма на ${targetEmail}`);
     
     return await sendCalculationResult(
