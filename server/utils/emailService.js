@@ -1,18 +1,6 @@
-const mailjet = require('node-mailjet');
+const axios = require('axios');
 
-// Инициализация Mailjet
-let mailjetClient = null;
-
-const initMailjet = () => {
-    if (!mailjetClient && process.env.MAILJET_API_KEY && process.env.MAILJET_SECRET_KEY) {
-        mailjetClient = mailjet.apiConnect(
-            process.env.MAILJET_API_KEY,
-            process.env.MAILJET_SECRET_KEY
-        );
-        console.log('📧 Mailjet инициализирован');
-    }
-    return mailjetClient;
-};
+const SENDAY_API_URL = 'https://api.sendsay.ru/';
 
 const formatMoney = (amount) => {
     if (!amount && amount !== 0) return '—';
@@ -315,10 +303,10 @@ const generateEmailTemplate = (calculatorType, inputData, resultData) => {
 
 const sendCalculationResult = async (toEmail, calculatorType, inputData, resultData) => {
     try {
-        const client = initMailjet();
+        const apiKey = process.env.SENDAY_API_KEY;
         
-        if (!client) {
-            throw new Error('Mailjet не инициализирован. Проверьте MAILJET_API_KEY и MAILJET_SECRET_KEY');
+        if (!apiKey) {
+            throw new Error('SENDAY_API_KEY не настроен');
         }
         
         const title = {
@@ -329,47 +317,59 @@ const sendCalculationResult = async (toEmail, calculatorType, inputData, resultD
         }[calculatorType] || 'Финансовый калькулятор';
         
         const html = generateEmailTemplate(calculatorType, inputData, resultData);
-        
         const fromEmail = process.env.EMAIL_FROM || 'lenamk019@gmail.com';
         
-        console.log(`📧 Отправка email через Mailjet на ${toEmail}...`);
-        console.log(`📧 Отправитель: ${fromEmail}`);
+        console.log(`📧 Отправка email через Sendsay на ${toEmail}...`);
         
-        const request = client.post('send', { version: 'v3.1' }).request({
-            Messages: [
-                {
-                    From: {
-                        Email: fromEmail,
-                        Name: 'Финансовый калькулятор'
-                    },
-                    To: [
-                        {
-                            Email: toEmail,
-                            Name: 'Пользователь'
-                        }
-                    ],
-                    Subject: `Результаты расчета - ${title} (${new Date().toLocaleDateString('ru-RU')})`,
-                    HTMLPart: html,
-                    TextPart: `Результаты расчета ${title}\n\nДата: ${new Date().toLocaleString('ru-RU')}\n\nВведенные данные:\n${JSON.stringify(inputData, null, 2)}\n\nРезультаты:\n${JSON.stringify(resultData, null, 2)}`
+        // Правильный формат запроса для Sendsay API
+        const requestData = {
+            action: "issue.send",
+            apikey: apiKey,
+            letter: {
+                subject: `Результаты расчета - ${title} (${new Date().toLocaleDateString('ru-RU')})`,
+                from: {
+                    email: fromEmail,
+                    name: 'Финансовый калькулятор'
+                },
+                to: [
+                    {
+                        email: toEmail,
+                        name: 'Пользователь'
+                    }
+                ],
+                message: {
+                    html: html,
+                    text: `Результаты расчета ${title}\n\nДата: ${new Date().toLocaleString('ru-RU')}\n\nВведенные данные:\n${JSON.stringify(inputData, null, 2)}\n\nРезультаты:\n${JSON.stringify(resultData, null, 2)}`
                 }
-            ]
+            }
+        };
+        
+        const response = await axios.post(SENDAY_API_URL, requestData, {
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            timeout: 30000
         });
         
-        const response = await request;
+        console.log(`📥 Ответ Sendsay:`, JSON.stringify(response.data, null, 2));
         
-        if (response.body.Messages && response.body.Messages[0].Status === 'success') {
-            console.log('✅ Email успешно отправлен через Mailjet!');
+        if (response.data && response.data.status === 'ok') {
+            console.log('✅ Email успешно отправлен через Sendsay!');
             console.log(`   📬 Получатель: ${toEmail}`);
             return { success: true };
+        } else if (response.data && response.data.errors) {
+            const errorMessages = response.data.errors.map(e => e.message || JSON.stringify(e)).join(', ');
+            console.error(`❌ Ошибки Sendsay: ${errorMessages}`);
+            throw new Error(errorMessages);
         } else {
-            const errorMsg = response.body.Messages?.[0]?.Errors?.[0]?.ErrorMessage || 'Неизвестная ошибка';
-            throw new Error(errorMsg);
+            throw new Error(response.data?.error || 'Неизвестная ошибка');
         }
         
     } catch (error) {
-        console.error('❌ Ошибка Mailjet:', error.message);
-        if (error.statusCode) {
-            console.error(`   HTTP статус: ${error.statusCode}`);
+        console.error('❌ Ошибка Sendsay:', error.message);
+        if (error.response) {
+            console.error(`   Статус: ${error.response.status}`);
+            console.error(`   Данные:`, error.response.data);
         }
         throw new Error(`Не удалось отправить email: ${error.message}`);
     }
