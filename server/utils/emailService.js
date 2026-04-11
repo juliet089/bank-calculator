@@ -1,7 +1,6 @@
 const axios = require('axios');
 
-const SENDAY_API_KEY = process.env.SENDAY_API_KEY;
-const SENDAY_API_URL = 'https://api.sendsay.ru/v2/issue/send';
+const SENDAY_API_URL = 'https://api.sendsay.ru/';
 
 const formatMoney = (amount) => {
     if (!amount && amount !== 0) return '—';
@@ -304,7 +303,9 @@ const generateEmailTemplate = (calculatorType, inputData, resultData) => {
 
 const sendCalculationResult = async (toEmail, calculatorType, inputData, resultData) => {
     try {
-        if (!SENDAY_API_KEY) {
+        const apiKey = process.env.SENDAY_API_KEY;
+        
+        if (!apiKey) {
             throw new Error('SENDAY_API_KEY не настроен');
         }
         
@@ -317,47 +318,65 @@ const sendCalculationResult = async (toEmail, calculatorType, inputData, resultD
         
         const html = generateEmailTemplate(calculatorType, inputData, resultData);
         
-        console.log(`📧 Отправка email через Sendsay на ${toEmail}...`);
-        
-        const response = await axios.post(SENDAY_API_URL, {
-            apikey: SENDAY_API_KEY,
-            subject: `Результаты расчета - ${title} (${new Date().toLocaleDateString('ru-RU')})`,
-            from: {
-                email: process.env.EMAIL_FROM || 'lenamk019@gmail.com',
-                name: 'Финансовый калькулятор'
-            },
-            to: [
-                {
-                    email: toEmail
+        // Правильный формат запроса для Sendsay API
+        const requestData = {
+            action: "issue.send",
+            apikey: apiKey,
+            letter: {
+                subject: `Результаты расчета - ${title} (${new Date().toLocaleDateString('ru-RU')})`,
+                from: {
+                    email: process.env.EMAIL_FROM || 'lenamk019@gmail.com',
+                    name: 'Финансовый калькулятор'
+                },
+                to: [
+                    {
+                        email: toEmail,
+                        name: 'Пользователь'
+                    }
+                ],
+                message: {
+                    html: html,
+                    text: `Результаты расчета ${title}\n\nДата: ${new Date().toLocaleString('ru-RU')}\n\nВведенные данные:\n${JSON.stringify(inputData, null, 2)}\n\nРезультаты:\n${JSON.stringify(resultData, null, 2)}`
                 }
-            ],
-            content: {
-                html: html,
-                text: `Результаты расчета ${title}\n\nДата: ${new Date().toLocaleString('ru-RU')}\n\nВведенные данные:\n${JSON.stringify(inputData, null, 2)}\n\nРезультаты:\n${JSON.stringify(resultData, null, 2)}`
             }
-        }, {
+        };
+        
+        console.log(`📧 Отправка email через Sendsay на ${toEmail}...`);
+        console.log(`📤 URL: ${SENDAY_API_URL}`);
+        console.log(`📤 Action: issue.send`);
+        
+        const response = await axios.post(SENDAY_API_URL, requestData, {
             headers: {
                 'Content-Type': 'application/json'
-            }
+            },
+            timeout: 30000
         });
+        
+        console.log(`📥 Статус ответа: ${response.status}`);
+        console.log(`📥 Данные ответа:`, JSON.stringify(response.data, null, 2));
         
         if (response.data && response.data.status === 'ok') {
             console.log('✅ Email успешно отправлен через Sendsay!');
             console.log(`   📬 Получатель: ${toEmail}`);
-            console.log(`   📝 ID: ${response.data.id}`);
-            return { success: true, messageId: response.data.id };
+            console.log(`   📝 ID: ${response.data.id || 'не указан'}`);
+            return { success: true, id: response.data.id };
+        } else if (response.data && response.data.errors) {
+            throw new Error(response.data.errors.map(e => e.message).join(', '));
         } else {
             throw new Error(response.data?.error || 'Неизвестная ошибка');
         }
         
     } catch (error) {
-        console.error('❌ Ошибка Sendsay:', error.response?.data || error.message);
-        
-        if (error.response?.data?.error) {
-            throw new Error(`Ошибка Sendsay: ${error.response.data.error}`);
+        console.error('❌ Ошибка Sendsay:');
+        if (error.response) {
+            console.error(`   Статус: ${error.response.status}`);
+            console.error(`   Данные:`, error.response.data);
+        } else if (error.request) {
+            console.error(`   Нет ответа от сервера: ${error.message}`);
         } else {
-            throw new Error(`Не удалось отправить email: ${error.message}`);
+            console.error(`   Ошибка: ${error.message}`);
         }
+        throw new Error(`Не удалось отправить email: ${error.message}`);
     }
 };
 
