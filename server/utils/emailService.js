@@ -1,7 +1,20 @@
-const axios = require('axios');
+const nodemailer = require('nodemailer');
 
-// Правильный URL для актуальной версии API Sendsay
-const SENDAY_API_URL = 'https://api.sendsay.ru/graphql';
+let transporter = null;
+
+const getTransporter = () => {
+    if (!transporter) {
+        console.log('📧 Используется Gmail SMTP');
+        transporter = nodemailer.createTransport({
+            service: 'gmail',
+            auth: {
+                user: process.env.EMAIL_USER,
+                pass: process.env.EMAIL_PASS
+            }
+        });
+    }
+    return transporter;
+};
 
 const formatMoney = (amount) => {
     if (!amount && amount !== 0) return '—';
@@ -304,11 +317,21 @@ const generateEmailTemplate = (calculatorType, inputData, resultData) => {
 
 const sendCalculationResult = async (toEmail, calculatorType, inputData, resultData) => {
     try {
-        const apiKey = process.env.SENDAY_API_KEY;
+        const fromEmail = process.env.EMAIL_USER;
         
-        if (!apiKey) {
-            throw new Error('SENDAY_API_KEY не настроен');
+        if (!fromEmail) {
+            throw new Error('EMAIL_USER не настроен в .env файле');
         }
+        
+        if (!process.env.EMAIL_PASS) {
+            throw new Error('EMAIL_PASS не настроен в .env файле');
+        }
+        
+        const transporter = getTransporter();
+        
+        // Проверяем подключение
+        await transporter.verify();
+        console.log('✅ Gmail SMTP подключение проверено');
         
         const title = {
             mortgage: 'Ипотечный калькулятор',
@@ -318,81 +341,41 @@ const sendCalculationResult = async (toEmail, calculatorType, inputData, resultD
         }[calculatorType] || 'Финансовый калькулятор';
         
         const html = generateEmailTemplate(calculatorType, inputData, resultData);
-        const fromEmail = process.env.EMAIL_FROM || 'lenamk019@gmail.com';
         
-        console.log(`📧 Отправка email через Sendsay на ${toEmail}...`);
-        
-        // GraphQL запрос для Sendsay
-        const graphqlQuery = {
-            query: `
-                mutation SendEmail($input: IssueSendInput!) {
-                    issueSend(input: $input) {
-                        result {
-                            id
-                            status
-                        }
-                        errors {
-                            message
-                        }
-                    }
-                }
-            `,
-            variables: {
-                input: {
-                    letter: {
-                        subject: `Результаты расчета - ${title} (${new Date().toLocaleDateString('ru-RU')})`,
-                        from: {
-                            email: fromEmail,
-                            name: 'Финансовый калькулятор'
-                        },
-                        to: [
-                            {
-                                email: toEmail,
-                                name: 'Пользователь'
-                            }
-                        ],
-                        message: {
-                            html: html,
-                            text: `Результаты расчета ${title}\n\nДата: ${new Date().toLocaleString('ru-RU')}`
-                        }
-                    }
-                }
-            }
+        const mailOptions = {
+            from: `"Финансовый калькулятор" <${fromEmail}>`,
+            to: toEmail,
+            subject: `Результаты расчета - ${title} (${new Date().toLocaleDateString('ru-RU')})`,
+            html: html,
+            text: `Результаты расчета ${title}\n\nДата: ${new Date().toLocaleString('ru-RU')}\n\nВведенные данные:\n${JSON.stringify(inputData, null, 2)}\n\nРезультаты:\n${JSON.stringify(resultData, null, 2)}`
         };
         
-        const response = await axios.post(SENDAY_API_URL, graphqlQuery, {
-            headers: {
-                'Content-Type': 'application/json',
-                'X-API-Key': apiKey
-            },
-            timeout: 30000
-        });
+        console.log(`📧 Отправка email через Gmail на ${toEmail}...`);
+        const info = await transporter.sendMail(mailOptions);
         
-        console.log(`📥 Ответ Sendsay:`, JSON.stringify(response.data, null, 2));
+        console.log('✅ Email успешно отправлен через Gmail!');
+        console.log(`   📝 ID: ${info.messageId}`);
+        console.log(`   📬 Получатель: ${toEmail}`);
         
-        if (response.data && response.data.data && response.data.data.issueSend) {
-            const result = response.data.data.issueSend;
-            if (result.result && result.result.status === 'ok') {
-                console.log('✅ Email успешно отправлен через Sendsay!');
-                console.log(`   📬 Получатель: ${toEmail}`);
-                return { success: true };
-            } else if (result.errors && result.errors.length > 0) {
-                const errorMessages = result.errors.map(e => e.message).join(', ');
-                throw new Error(errorMessages);
-            }
-        } else if (response.data && response.data.errors) {
-            throw new Error(response.data.errors[0].message);
-        } else {
-            throw new Error('Неизвестная ошибка');
-        }
+        return { 
+            success: true, 
+            messageId: info.messageId,
+            to: toEmail,
+            subject: mailOptions.subject
+        };
         
     } catch (error) {
-        console.error('❌ Ошибка Sendsay:', error.message);
-        if (error.response) {
-            console.error(`   Статус: ${error.response.status}`);
-            console.error(`   Данные:`, JSON.stringify(error.response.data, null, 2));
+        console.error('❌ Ошибка отправки email:', error.message);
+        
+        if (error.message.includes('Invalid login') || error.message.includes('535')) {
+            throw new Error('Ошибка аутентификации. Проверьте EMAIL_USER и EMAIL_PASS в .env');
+        } else if (error.message.includes('ECONNREFUSED') || error.message.includes('ETIMEDOUT')) {
+            throw new Error('Не удалось подключиться к SMTP серверу. Проверьте интернет-соединение.');
+        } else if (error.message.includes('550')) {
+            throw new Error('Email получателя отклонен. Проверьте правильность адреса.');
+        } else {
+            throw new Error(`Не удалось отправить email: ${error.message}`);
         }
-        throw new Error(`Не удалось отправить email: ${error.message}`);
     }
 };
 
